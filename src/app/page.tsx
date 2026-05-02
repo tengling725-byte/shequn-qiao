@@ -30,7 +30,10 @@ const DEFAULT_COMMUNITY = {
   isJoined: true
 }
 
+type PageType = 'home' | 'publish' | 'community' | 'profile'
+
 export default function Home() {
+  const [page, setPage] = useState<PageType>('home')
   const [tab, setTab] = useState<'resource' | 'need'>('resource')
   const [typeFilter, setTypeFilter] = useState('')
   const [keyword, setKeyword] = useState('')
@@ -182,19 +185,31 @@ export default function Home() {
 
       {/* Bottom Nav */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-2 text-xs">
-        <button className="text-blue-600 flex flex-col items-center">
+        <button
+          onClick={() => setPage('home')}
+          className={`flex flex-col items-center ${page === 'home' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
           <span className="text-lg">🏠</span>
           首页
         </button>
-        <button className="text-gray-500 flex flex-col items-center">
+        <button
+          onClick={() => setPage('publish')}
+          className={`flex flex-col items-center ${page === 'publish' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
           <span className="text-lg">📝</span>
           发布
         </button>
-        <button className="text-gray-500 flex flex-col items-center">
+        <button
+          onClick={() => setPage('community')}
+          className={`flex flex-col items-center ${page === 'community' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
           <span className="text-lg">👥</span>
           社群
         </button>
-        <button className="text-gray-500 flex flex-col items-center">
+        <button
+          onClick={() => setPage('profile')}
+          className={`flex flex-col items-center ${page === 'profile' ? 'text-blue-600' : 'text-gray-500'}`}
+        >
           <span className="text-lg">👤</span>
           我的
         </button>
