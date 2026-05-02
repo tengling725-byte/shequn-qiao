@@ -20,31 +20,28 @@ const CATEGORIES = {
 const RESOURCE_TYPES = ['长期', '短期']
 const NEED_TYPES = ['长期', '急需', '未来3月', '自定义']
 
+// 默认社群数据
+const DEFAULT_COMMUNITY = {
+  id: 'test-community-1',
+  name: '北京大学半导体校友群',
+  description: '北京大学半导体行业校友交流群',
+  type: '校友',
+  memberCount: 128,
+  isJoined: true
+}
+
 export default function Home() {
   const [tab, setTab] = useState<'resource' | 'need'>('resource')
   const [typeFilter, setTypeFilter] = useState('')
   const [keyword, setKeyword] = useState('')
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const { currentCommunity, user, setCurrentCommunity } = useAppStore()
 
-  // 默认选择第一个社群
-  useEffect(() => {
-    if (!currentCommunity) {
-      // 直接设置默认社群
-      setCurrentCommunity({
-        id: 'test-community-1',
-        name: '北京大学半导体校友群',
-        description: '北京大学半导体行业校友交流群',
-        type: '校友',
-        memberCount: 128,
-        isJoined: true
-      })
-    }
-  }, [])
+  // 从store获取，并设置默认值
+  const store = useAppStore()
+  const currentCommunity = store.currentCommunity || DEFAULT_COMMUNITY
 
   const loadData = async () => {
-    if (!currentCommunity) return
     setLoading(true)
     try {
       if (tab === 'resource') {
