@@ -26,7 +26,22 @@ export default function Home() {
   const [keyword, setKeyword] = useState('')
   const [items, setItems] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const { currentCommunity, user } = useAppStore()
+  const { currentCommunity, user, setCurrentCommunity } = useAppStore()
+
+  // 默认选择第一个社群
+  useEffect(() => {
+    if (!currentCommunity) {
+      // 直接设置默认社群
+      setCurrentCommunity({
+        id: 'test-community-1',
+        name: '北京大学半导体校友群',
+        description: '北京大学半导体行业校友交流群',
+        type: '校友',
+        memberCount: 128,
+        isJoined: true
+      })
+    }
+  }, [])
 
   const loadData = async () => {
     if (!currentCommunity) return
