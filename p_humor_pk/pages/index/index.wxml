@@ -1,0 +1,38 @@
+<view class="container">
+  <view class="title-section">
+    <text class="title">埂王争霸</text>
+    <text class="subtitle">梗龄：{{gameAge}}天</text>
+  </view>
+
+  <view class="stats-section">
+    <view class="stat-item">
+      <text class="stat-value">{{totalScore}}</text>
+      <text class="stat-label">累计得分</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-value">{{highScore}}</text>
+      <text class="stat-label">最高局得分</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-value">{{recentScore}}</text>
+      <text class="stat-label">最近得分</text>
+    </view>
+  </view>
+
+  <view class="start-btn" bindtap="startGame">
+    <text>开始挑战</text>
+  </view>
+
+  <view class="tips-section">
+    <text class="tips-text">越快答对，分数越高！</text>
+    <text class="tips-text">连胜更有额外加分</text>
+  </view>
+
+  <view class="shop-icon" bindtap="goShop">
+    <text>🛒</text>
+  </view>
+
+  <view class="reset-btn" bindtap="resetData">
+    <text>重置数据</text>
+  </view>
+</view>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHD核心倾向测评</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; line-height: 1.8; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; margin-bottom: 10px; }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; font-size: 18px; }
+        .subtitle { text-align: center; color: #666; font-size: 14px; margin-bottom: 30px; }
+        .select-screen { padding: 20px 0; }
+        .test-checkbox { display: block; padding: 15px 20px; margin: 10px 0; background: #fafafa; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .test-checkbox:hover { border-color: #4a90d9; }
+        .test-checkbox.checked { border-color: #4a90d9; background: #e8f4fc; }
+        .test-checkbox input { margin-right: 12px; }
+        .test-checkbox span { font-size: 15px; }
+        .question { margin-bottom: 30px; padding: 20px; background: #fafafa; border-radius: 8px; }
+        .question-title { font-weight: bold; font-size: 16px; color: #333; margin-bottom: 15px; }
+        .option { display: block; padding: 12px 15px; margin: 8px 0; background: #fff; border: 2px solid #e0e0e0; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+        .option:hover { border-color: #4a90d9; background: #f0f7ff; }
+        .option.selected { border-color: #4a90d9; background: #e8f4fc; }
+        .option input { margin-right: 10px; }
+        .btn { display: block; width: 200px; margin: 30px auto 0; padding: 15px; background: #4a90d9; color: #fff; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: background 0.2s; }
+        .btn:hover { background: #3a7bc8; }
+        .result { display: none; margin-top: 30px; padding: 20px; background: #f0f7ff; border-radius: 8px; }
+        .result h2 { color: #4a90d9; margin-bottom: 15px; }
+        .result-content { white-space: pre-wrap; font-size: 14px; line-height: 1.8; }
+        .progress { text-align: center; color: #666; margin-bottom: 20px; }
+        .export-btn { display: none; background: #5cb85c; margin-top: 20px; }
+        .export-btn:hover { background: #4cae4c; }
+        .test-section-title { font-size: 16px; font-weight: bold; color: #4a90d9; margin: 30px 0 15px; padding-bottom: 10px; border-bottom: 1px solid #ddd; }
+        .nav-bar { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .nav-btn { width: 120px; padding: 12px; background: #6c757d; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+        .nav-btn:hover { background: #5a6268; }
+        .nav-btn:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PHD核心倾向评估测试</h1>
+        <p class="subtitle">请根据你最直接的第一反应选择，无需过度深思</p>
+        
+        <div id="selectScreen" class="select-screen">
+            <h2>请选择要做的测试题（可多选）</h2>
+            <div class="test-checkbox" id="cb1" onclick="toggleTest(1)">
+                <input type="checkbox" id="test1">
+                <span>职业弹性测评（10题）</span>
+            </div>
+            <div class="test-checkbox" id="cb2" onclick="toggleTest(2)">
+                <input type="checkbox" id="test2">
+                <span>学术人格素描（10题）</span>
+            </div>
+            <div class="test-checkbox" id="cb3" onclick="toggleTest(3)">
+                <input type="checkbox" id="test3">
+                <span>价值观刚性测试（10题）</span>
+            </div>
+            <button class="btn" id="startBtn">开始测试</button>
+        </div>
+        
+        <div id="quiz" style="display:none;">
+            <div class="progress">题目 <span id="current">1</span> / <span id="total">0</span></div>
+            <div class="nav-bar">
+                <button class="nav-btn" id="prevBtn">上一题</button>
+                <button class="nav-btn" id="nextBtn">下一题</button>
+            </div>
+            <div id="questions"></div>
+            <button class="btn" id="submitBtn">提交测试</button>
+        </div>
+        
+        <div class="result" id="result">
+            <h2>测试结果</h2>
+            <div class="result-content" id="resultContent"></div>
+            <button class="btn" id="restartBtn">继续测试</button>
+            <button class="btn export-btn" id="exportBtn">导出结果文档</button>
+        </div>
+    </div>
+
+    <script>
+        var testSets = {
+            1: {
+                name: "职业弹性测评",
+                questions: [
+                    { id: 1, text: "当你被一个统计力学或量子物理的问题吸引时，最让你兴奋的部分通常是？", options: [{ label: "A", text: "推导过程中某个数学结构的优美（如对称性、守恒量、精确解）" }, { label: "B", text: "理解了一个反直觉的物理现象（如熵增、纠缠、量子隧穿）" }, { label: "C", text: "发现这个理论能解释或预测现实世界中的某种行为" }, { label: "D", text: "其他" }], analysis: { A: "适合纯理论", B: "适合纯理论", C: "对应用有一定开放度", D: "需追问" } },
+                    { id: 2, text: "假设有一个课题，你需要用数值模拟来验证一个解析推导的结论，但你自己不需要写代码——有一位合作者负责全部编程工作。你会？", options: [{ label: "A", text: "非常愿意，我相信合作能做出更好的工作" }, { label: "B", text: "勉强可以接受，只要我不碰代码就行" }, { label: "C", text: "不太愿意，我觉得任何数值工作都会污染理论的纯粹" }, { label: "D", text: "完全拒绝，我只想做纯粹的纸上推导" }], analysis: { A: "可塑性强，有合作意愿", B: "可塑性强，有合作意愿", C: "需进一步沟通", D: "工业界/学术界路都会很窄" } },
+                    { id: 3, text: "对于电磁学和光学，你的真实态度是？", options: [{ label: "A", text: "确实不喜欢，但其中某些子领域（如量子光学的基础理论、统计光学）我觉得还可以接受" }, { label: "B", text: "全面排斥，没有任何一部分让我觉得有意思" }, { label: "C", text: "其实不是讨厌内容，是讨厌当时的学习方式或考试压力" }, { label: "D", text: "我不确定，可能了解得更深入后会改变看法" }], analysis: { A: "有绕开工程化内容的可能", B: "需评估是否可完全不碰", C: "可能通过重构学习体验改善", D: "有开放心态" } },
+                    { id: 4, text: "当你需要写一篇完整的、给别人看的文章（学术或非学术）时，最大的痛苦来源是？", options: [{ label: "A", text: "不知道如何组织逻辑，担心写出来别人看不懂" }, { label: "B", text: "遣词造句很费劲，把想法变成通顺的句子让我头疼" }, { label: "C", text: "不是能力问题，是觉得推导本身就能说明一切，写作是多余的" }, { label: "D", text: "其实我没有太多痛苦，只是花的时间比别人多一点" }], analysis: { A: "可通过逻辑框架训练改善", B: "可通过模板和练习改善", C: "态度问题，更难改变", D: "问题不大" } },
+                    { id: 5, text: "如果有人帮你把推导的逻辑框架整理好，只需要你把这个框架写成完整的论文（语言润色由别人负责），你会？", options: [{ label: "A", text: "这样好多了，我愿意写逻辑框架" }, { label: "B", text: "还是不太愿意，但为了毕业/工作可以硬着头皮写" }, { label: "C", text: "连逻辑框架都不想写，这不是我该做的" }, { label: "D", text: "我更希望有人替我把所有写作都做完" }], analysis: { A: "可塑性高", B: "有妥协意愿", C: "需重新考虑学术道路", D: "不切实际" } },
+                    { id: 6, text: "毕业后有两个选择，你更倾向于哪一个？", options: [{ label: "A", text: "在高校做纯理论博士后：每年写2-3篇论文，做2-3次学术报告" }, { label: "B", text: "在工业界做统计力学的应用仿真工程师：每周写一份技术报告，偶尔在项目会上讲解" }, { label: "C", text: "两个都不喜欢，我想找个完全不需要写作和报告的工作" }, { label: "D", text: "两个都可以接受，关键是课题内容是否吸引我" }], analysis: { A: "接受学术界的写作/报告", B: "对工业界的tech文档模式接受度高", C: "需要现实检查", D: "灵活度高" } },
+                    { id: 7, text: "如果一份工作需要你学习使用一种新的仿真软件（如COMSOL），不需要自己写代码，只需要设置参数、运行、分析结果，你愿意花2-3周去学习吗？", options: [{ label: "A", text: "愿意，这只是使用工具，跟编程不一样" }, { label: "B", text: "勉强可以，如果这份工作其他地方不错的话" }, { label: "C", text: "不太愿意，我觉得任何软件操作都繁琐" }, { label: "D", text: "完全不愿意，我只想做纸上推导" }], analysis: { A: "工业界有出路", B: "工业界有出路", C: "工业界路窄", D: "工业界几乎无路" } },
+                    { id: 8, text: "假设有一个为期8周的学术写作训练营，每天花1小时练习写不同段落，结束后能写出及格的初稿。你愿意参加吗？", options: [{ label: "A", text: "愿意，只要真的有效果" }, { label: "B", text: "有点犹豫，但如果导师/朋友建议的话会尝试" }, { label: "C", text: "不太愿意，我觉得写作不是靠练出来的" }, { label: "D", text: "绝对不会，这是浪费我的时间" }], analysis: { A: "有补救可能", B: "有补救可能", C: "需要进一步说服或提供成功案例", D: "可能需要重新评估职业路径" } },
+                    { id: 9, text: "你有没有过这样的经历：在讨论物理问题时，别人不理解你的意思，但你换了一种方式（画图、类比、举例）后对方就明白了？你当时的感受是？", options: [{ label: "A", text: "有，当时觉得原来表达是可以学习的，挺有成就感" }, { label: "B", text: "有，但觉得很麻烦，为什么对方不能直接理解" }, { label: "C", text: "没有这样的经历，我的表达方式一直没问题" }, { label: "D", text: "没有认真想过这个问题" }], analysis: { A: "有正反馈经验，可塑性高", B: "态度问题", C: "可能存在盲区", D: "需进一步探索" } },
+                    { id: 10, text: "想像你35岁时的理想工作状态。以下哪个描述最接近你的愿景？", options: [{ label: "A", text: "每天大部分时间做纸上推导，几乎不接触编程、实验、写作" }, { label: "B", text: "在一个小团队里做理论建模，偶尔写报告但不用发表论文" }, { label: "C", text: "独立领导一个理论小组，有博士后和学生帮我处理数值和写作部分" }, { label: "D", text: "不做研究，而是教别人物理（如大学或竞赛教练）" }], analysis: { A: "有现实感，可走纯理论路线", B: "可能更适合工业界或教育界", C: "需要先证明自己，这条路最漫长", D: "可能更适合工业界或教育界" } }
+                ]
+            },
+            2: {
+                name: "学术人格素描",
+                questions: [
+                    { id: 1, text: "你最能进入心流状态的物理学习场景是？", options: [{ label: "A", text: "独立完成一道复杂的计算题，逐步推导出答案" }, { label: "B", text: "理解一个抽象概念（如熵、纠缠），并在脑中构建直觉图像" }, { label: "C", text: "发现两个看似无关的领域之间存在深层联系" }, { label: "D", text: "向他人解释一个难点，对方恍然大悟的瞬间" }], analysis: { A: "偏向解题快感", B: "偏向概念理解", C: "偏向研究型思维", D: "偏向教学/表达驱动" } },
+                    { id: 2, text: "如果只能选一个方向研究十年，你会选？", options: [{ label: "A", text: "找到一个统计力学模型的严格解" }, { label: "B", text: "理解量子测量问题的本质" }, { label: "C", text: "预测一种新材料的奇异相变" }, { label: "D", text: "设计一个更高效的量子算法" }], analysis: { A: "纯数学/解析", B: "基础理论/哲学", C: "应用理论", D: "工程/计算" } },
+                    { id: 3, text: "看到一段Python代码时，你的第一反应是？", options: [{ label: "A", text: "烦躁，想关掉页面" }, { label: "B", text: "有点紧张，觉得自己学不会" }, { label: "C", text: "觉得这不是真正的物理，但必要时可以学" }, { label: "D", text: "没什么特别感觉，只是没动力去学" }], analysis: { A: "情绪排斥", B: "能力焦虑", C: "态度问题（身份认同）", D: "经验缺失" } },
+                    { id: 4, text: "写论文时最痛苦的环节是？", options: [{ label: "A", text: "组织整体结构和逻辑流" }, { label: "B", text: "把数学推导翻译成文字叙述" }, { label: "C", text: "担心写不好被导师/审稿人批评" }, { label: "D", text: "单纯觉得打字和排版浪费时间" }], analysis: { A: "结构思维弱", B: "数学-语言转换难", C: "评价焦虑", D: "过程厌恶" } },
+                    { id: 5, text: "在哪种沟通场景下你最不自在？", options: [{ label: "A", text: "一对一与导师讨论研究进展" }, { label: "B", text: "小组会议中即兴发言" }, { label: "C", text: "正式学术报告（有PPT）" }, { label: "D", text: "写邮件向陌生人请教问题" }], analysis: { A: "不善处理权威关系", B: "群体社交焦虑", C: "公众演讲恐惧", D: "异步书面沟通障碍" } },
+                    { id: 6, text: "你理想中的学术工作日是？", options: [{ label: "A", text: "独自在办公室推导公式，偶尔与导师讨论" }, { label: "B", text: "与几个合作者白板讨论，碰撞想法" }, { label: "C", text: "参加国际会议，报告最新成果" }, { label: "D", text: "指导学生，看他们做出自己的发现" }], analysis: { A: "高度独立型", B: "小团队协作型", C: "公众展示型", D: "mentorship型" } },
+                    { id: 7, text: "如果学术界消失，你的备选方向是？", options: [{ label: "A", text: "数学研究（更纯粹，更少实验）" }, { label: "B", text: "哲学或科学史（继续思考基础问题）" }, { label: "C", text: "量化金融（用数学能力换取高收入）" }, { label: "D", text: "没有想过，无法接受这个假设" }], analysis: { A: "学科迁移能力", B: "问题驱动型", C: "技能变现型", D: "对学术身份的过度依赖" } },
+                    { id: 8, text: "你曾有过从讨厌到接受的技能学习经历吗？", options: [{ label: "A", text: "有，通过发现它的实用价值改变了态度" }, { label: "B", text: "有，通过找到好的学习资源/老师克服了困难" }, { label: "C", text: "没有，但愿意尝试" }, { label: "D", text: "没有，也不觉得有必要" }], analysis: { A: "认知重构能力强", B: "学习能力可迁移", C: "开放但缺乏经验", D: "可塑性低" } },
+                    { id: 9, text: "你期望的导师指导风格是？", options: [{ label: "A", text: "每月见面一次，给我大方向，其余时间不要打扰我" }, { label: "B", text: "每周讨论，检查进展，给具体建议" }, { label: "C", text: "每天随时可以找到，即时反馈" }, { label: "D", text: "让我完全独立，只在关键时刻把关" }], analysis: { A: "需要高度自主（适合成熟研究者）", B: "需要结构化支持", C: "需要密集指导（PhD早期常见）", D: "可能过于理想化" } },
+                    { id: 10, text: "如果PhD结束后没能获得教职，你会？", options: [{ label: "A", text: "觉得这段时间有价值，不后悔" }, { label: "B", text: "后悔没早点转行，但接受现实" }, { label: "C", text: "强烈后悔，觉得人生被浪费" }, { label: "D", text: "延长博士后，直到找到教职为止" }], analysis: { A: "过程导向，适合高风险路径", B: "结果导向但适应性强", C: "结果导向且脆弱", D: "可能陷入路径依赖" } }
+                ]
+            },
+            3: {
+                name: "价值观刚性测试",
+                questions: [
+                    { id: 1, text: "你热爱统计力学/量子物理，最核心的吸引力在于：", options: [{ label: "A", text: "解决难题、推导出优美数学解时的纯粹智力快感。" }, { label: "B", text: "理解世界底层运行逻辑和哲学内涵带来的满足。" }, { label: "C", text: "欣赏理论数学结构本身所具有的简洁、对称与深刻之美。" }, { label: "D", text: "以上皆有，难以区分。" }], analysis: { A: "实用主义潜力者", B: "合作依赖型", C: "纯粹主义守护者", D: "价值矛盾/未决型" } },
+                    { id: 2, text: "你对编程、写作、表达等同道的反感，主要源于：", options: [{ label: "A", text: "挫折感：我不擅长，做起来吃力且容易出错。" }, { label: "B", text: "价值排斥：我认为这些是杂事，分散了我思考真正问题的精力。" }, { label: "C", text: "完美主义：我讨厌不精确、不完美的过程和结果（如代码Bug、不完美的表达）。" }, { label: "D", text: "社交压力：我害怕在这些活动中被他人审视和评判。" }], analysis: { A: "实用主义潜力者", B: "合作依赖型", C: "纯粹主义守护者", D: "价值矛盾/未决型" } },
+                    { id: 3, text: "在理想的一天学术工作中，你希望大部分时间用于：", options: [{ label: "A", text: "独自一人，在纸笔或黑板上进行长期的、不受打扰的推导与思考。" }, { label: "B", text: "与一两位思维同步的合作者进行深度讨论，共同攻坚。" }, { label: "C", text: "阅读最新的论文，汲取思想，并整理成自己的笔记。" }, { label: "D", text: "指导学生，或在研讨会上介绍自己的最新想法。" }], analysis: { A: "实用主义潜力者", B: "合作依赖型", C: "纯粹主义守护者", D: "价值矛盾/未决型" } },
+                    { id: 4, text: "为了验证一个重要的理论猜想，必须进行计算机模拟。你会：", options: [{ label: "A", text: "自己学习必要的编程来完成它，这是研究的必要部分。" }, { label: "B", text: "寻找一位可靠的、擅长编程的合作者，由他/她负责实现。" }, { label: "C", text: "试图寻找纯解析的证明方法，尽可能避免使用计算机。" }, { label: "D", text: "暂时搁置，也许未来会有不需要模拟的新方法。" }], analysis: { A: "学术或工业界有戏", B: "学术或工业界有戏", C: "学术路径极其艰难", D: "学术路径极其艰难" } },
+                    { id: 5, text: "为获得顶尖理论组的纯研究职位，你愿意在博士阶段每天投入2小时在讨厌的技能（编程/写作）上吗？", options: [{ label: "A", text: "愿意，这是必须支付的代价，我有明确的动力坚持。" }, { label: "B", text: "勉强愿意，但会非常痛苦，可能需要外部监督。" }, { label: "C", text: "不愿意，这违背了我追求纯粹思考的初衷。" }, { label: "D", text: "不确定，取决于具体做什么。" }], analysis: { A: "可挑战博士", B: "需慎重考虑", C: "需慎重考虑", D: "需慎重考虑" } },
+                    { id: 6, text: "你更认同以下哪种学者模式？", options: [{ label: "A", text: "理查德·费曼型：善于教学、科普和沟通，思想因传播而产生巨大影响力。" }, { label: "B", text: "格里戈里·佩雷尔曼型：几乎不与外界交流，将证明公开发布后便隐居，追求极致的个人纯粹。" }, { label: "C", text: "爱德华·威滕型：既是顶尖的数学物理学家，也深刻影响弦论领域，沟通于顶尖小圈子。" }, { label: "D", text: "都不完全认同，我有自己的模式。" }], analysis: { A: "实用主义潜力者", B: "合作依赖型", C: "纯粹主义守护者", D: "价值矛盾/未决型" } },
+                    { id: 7, text: "将统计力学的思想应用于一个新领域，你更可能对以下哪种产生好奇？", options: [{ label: "A", text: "金融市场崩溃的临界现象和相变类比。" }, { label: "B", text: "社交网络中信息传播的动力学模型。" }, { label: "C", text: "新型量子材料的拓扑相变预测。" }, { label: "D", text: "都不感兴趣，我更喜欢研究统计力学本身的基础框架。" }], analysis: { A: "实用主义潜力者", B: "合作依赖型", C: "纯粹主义守护者", D: "价值矛盾/未决型" } },
+                    { id: 8, text: "如果写作被重新定义为将你脑海中已完成的完美推导，清晰、无损耗地转录出来，这个过程对你的吸引力会：", options: [{ label: "A", text: "增加，这更像是一种整理和记录，我可能会接受。" }, { label: "B", text: "不变，我讨厌的是写这个动作本身，无论其目的。" }, { label: "C", text: "不确定，可能需要试试看。" }, { label: "D", text: "减少，这强调了其任务属性，让我更有压力。" }], analysis: { A: "实用主义潜力者", B: "合作依赖型", C: "纯粹主义守护者", D: "价值矛盾/未决型" } },
+                    { id: 9, text: "一份工作能让你100%时间做纯数学推导，但地点在某对冲基金量化部，薪酬是教授的5倍。你的第一反应是：", options: [{ label: "A", text: "非常有吸引力，理想的工作内容是最重要的，在哪做、为何做是次要的。" }, { label: "B", text: "可以考虑，高薪是对我能力的认可，也能提供更自由的研究环境。" }, { label: "C", text: "难以接受，学术界的纯粹环境和求知氛围是金钱无法替代的。" }, { label: "D", text: "坚决拒绝，我反对将智力成果应用于资本运作。" }], analysis: { A: "工业界高薪研究是可行选项", B: "工业界高薪研究是可行选项", C: "基本限定在学术界或非营利机构", D: "基本限定在学术界或非营利机构" } },
+                    { id: 10, text: "回顾过去，你是否有过成功克服对某事的厌恶的经历？（例如，讨厌体育但最终坚持跑步）", options: [{ label: "A", text: "是，我通过看到其长远价值/设定明确目标，成功坚持并掌握了它。" }, { label: "B", text: "是，但主要是由于外部压力（如考试要求），压力消失后就不再做了。" }, { label: "C", text: "否，我通常会避开我真正厌恶的事情，很难强迫自己。" }, { label: "D", text: "不确定/想不起来。" }], analysis: { A: "短板有弥补可能", B: "改变性格和习惯会非常困难", C: "改变性格和习惯会非常困难", D: "无单独解析" } }
+                ]
+            }
+        };
+
+        var selectedTests = [];
+        var allQuestions = [];
+        var currentIdx = 0;
+        var answers = {};
+
+        document.getElementById("startBtn").onclick = function() {
+            if (selectedTests.length === 0) {
+                alert("请至少选择一套测试题");
+                return;
+            }
+            allQuestions = [];
+            for (var i = 0; i < selectedTests.length; i++) {
+                var testId = selectedTests[i];
+                var ts = testSets[testId];
+                for (var j = 0; j < ts.questions.length; j++) {
+                    var q = ts.questions[j];
+                    allQuestions.push({
+                        globalId: allQuestions.length + 1,
+                        testId: testId,
+                        testName: ts.name,
+                        id: q.id,
+                        text: q.text,
+                        options: q.options,
+                        analysis: q.analysis
+                    });
+                }
+            }
+            document.getElementById("selectScreen").style.display = "none";
+            document.getElementById("quiz").style.display = "block";
+            document.getElementById("total").textContent = allQuestions.length;
+            renderQuestion();
+        };
+
+        document.getElementById("submitBtn").onclick = showResult;
+        document.getElementById("exportBtn").onclick = exportResult;
+        document.getElementById("prevBtn").onclick = prevQuestion;
+        document.getElementById("nextBtn").onclick = nextQuestion;
+        document.getElementById("restartBtn").onclick = restartTest;
+
+        function toggleTest(testId) {
+            var idx = selectedTests.indexOf(testId);
+            var cb = document.getElementById("test" + testId);
+            var label = document.getElementById("cb" + testId);
+            if (idx > -1) {
+                cb.checked = false;
+                label.classList.remove("checked");
+                selectedTests.splice(idx, 1);
+            } else {
+                cb.checked = true;
+                label.classList.add("checked");
+                selectedTests.push(testId);
+            }
+        }
+
+        function renderQuestion() {
+            var q = allQuestions[currentIdx];
+            var html = "<div class=\"question\" id=\"q" + currentIdx + "\">";
+            if (currentIdx === 0 || allQuestions[currentIdx].testId !== allQuestions[currentIdx - 1].testId) {
+                html += "<div class=\"test-section-title\">" + q.testName + "</div>";
+            }
+            html += "<div class=\"question-title\">" + q.globalId + ". " + q.text + "</div>";
+            var savedAnswer = answers[currentIdx];
+            for (var i = 0; i < q.options.length; i++) {
+                var opt = q.options[i];
+                var isSelected = (savedAnswer && savedAnswer === opt.label) ? " selected" : "";
+                html += "<label class=\"option" + isSelected + "\" onclick=\"selectOption(" + currentIdx + ", '" + opt.label + "')\">";
+                html += "<input type=\"radio\" name=\"q" + currentIdx + "\" value=\"" + opt.label + "\">";
+                html += "<span>" + opt.label + ") " + opt.text + "</span>";
+                html += "</label>";
+            }
+            html += "</div>";
+            document.getElementById("questions").innerHTML = html;
+            document.getElementById("current").textContent = currentIdx + 1;
+            
+            document.getElementById("prevBtn").disabled = (currentIdx === 0);
+            document.getElementById("nextBtn").disabled = (currentIdx === allQuestions.length - 1);
+        }
+
+        function selectOption(idx, label) {
+            var opts = document.querySelectorAll("#q" + idx + " .option");
+            for (var i = 0; i < opts.length; i++) {
+                opts[i].classList.remove("selected");
+            }
+            var radio = document.querySelector("#q" + idx + " input[value=\"" + label + "\"]");
+            radio.closest(".option").classList.add("selected");
+            radio.checked = true;
+            answers[idx] = label;
+            
+            if (idx < allQuestions.length - 1) {
+                currentIdx = idx + 1;
+                renderQuestion();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentIdx > 0) {
+                currentIdx = currentIdx - 1;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentIdx < allQuestions.length - 1) {
+                currentIdx = currentIdx + 1;
+                renderQuestion();
+            }
+        }
+
+        function showResult() {
+            var answeredCount = 0;
+            for (var key in answers) {
+                if (answers.hasOwnProperty(key)) {
+                    answeredCount++;
+                }
+            }
+            if (answeredCount < allQuestions.length) {
+                alert("请完成所有题目后再提交");
+                return;
+            }
+
+            var d = new Date();
+            var timestamp = d.toLocaleString("zh-CN");
+            var resultText = "PHD核心倾向评估测试结果\n";
+            resultText += "============================\n";
+            resultText += "测试时间：" + timestamp + "\n";
+            
+            var testNames = "";
+            for (var i = 0; i < selectedTests.length; i++) {
+                if (i > 0) testNames += "、";
+                testNames += testSets[selectedTests[i]].name;
+            }
+            resultText += "本次测试：" + testNames + "\n";
+            resultText += "题目总数：" + allQuestions.length + "题\n\n";
+            resultText += "一、题目与答案\n";
+            resultText += "----------------------------\n";
+
+            var currentTestId = null;
+            for (var i = 0; i < allQuestions.length; i++) {
+                var q = allQuestions[i];
+                if (q.testId !== currentTestId) {
+                    currentTestId = q.testId;
+                    resultText += "\n【" + q.testName + "】\n";
+                }
+                var answer = answers[i];
+                var opt = null;
+                for (var j = 0; j < q.options.length; j++) {
+                    if (q.options[j].label === answer) {
+                        opt = q.options[j];
+                        break;
+                    }
+                }
+                resultText += "\n" + q.globalId + ". " + q.text + "\n";
+                resultText += "你的答案：" + answer + ") " + opt.text + "\n";
+                resultText += "解析：" + q.analysis[answer] + "\n";
+            }
+
+            resultText += "\n\n二、整体分析\n";
+            resultText += "----------------------------\n";
+
+            currentTestId = null;
+            for (var i = 0; i < allQuestions.length; i++) {
+                var q = allQuestions[i];
+                if (q.testId !== currentTestId) {
+                    currentTestId = q.testId;
+                    resultText += "\n【" + q.testName + "】\n";
+                    resultText += analyzeTestSet(q.testId) + "\n";
+                }
+            }
+
+            document.getElementById("resultContent").textContent = resultText;
+            document.getElementById("result").style.display = "block";
+            document.getElementById("exportBtn").style.display = "block";
+            document.getElementById("submitBtn").style.display = "none";
+            document.getElementById("quiz").style.display = "none";
+        }
+
+        function analyzeTestSet(testId) {
+            var startIdx = -1;
+            for (var i = 0; i < allQuestions.length; i++) {
+                if (allQuestions[i].testId === testId) {
+                    startIdx = i;
+                    break;
+                }
+            }
+            var endIdx = -1;
+            for (var i = allQuestions.length - 1; i >= 0; i--) {
+                if (allQuestions[i].testId === testId) {
+                    endIdx = i;
+                    break;
+                }
+            }
+            var count = { A: 0, B: 0, C: 0, D: 0 };
+            for (var i = startIdx; i <= endIdx; i++) {
+                var a = answers[i];
+                count[a]++;
+            }
+
+            var profile = "";
+            var max = "A";
+            var maxCount = count.A;
+            for (var key in count) {
+                if (count[key] > maxCount) {
+                    maxCount = count[key];
+                    max = key;
+                }
+            }
+
+            if (testId === 3) {
+                if (max === "A") {
+                    profile = "实用主义潜力者 - 虽有偏好，但能基于目标驱动自己克服厌恶，具备较高的适应性。学术和业界均有路径，但需明确目标。";
+                } else if (max === "B") {
+                    profile = "合作依赖型/外部驱动型 - 需要借助外部结构（合作者、高薪、环境压力）来弥补短板。适合寻找互补型团队。";
+                } else if (max === "C") {
+                    profile = "纯粹主义守护者 - 将内心的纯粹性和正确性置于最高优先级，妥协意愿极低。几乎必须转向纯数学或理论性极强的领域。";
+                } else {
+                    profile = "价值矛盾/未决型 - 动机复杂或尚未清晰，需要更深入的对话来厘清核心驱动力和恐惧。";
+                }
+                var q4, q5, q9, q10;
+                for (var i = 0; i < allQuestions.length; i++) {
+                    if (allQuestions[i].testId === 3 && allQuestions[i].id === 4) q4 = allQuestions[i];
+                    if (allQuestions[i].testId === 3 && allQuestions[i].id === 5) q5 = allQuestions[i];
+                    if (allQuestions[i].testId === 3 && allQuestions[i].id === 9) q9 = allQuestions[i];
+                    if (allQuestions[i].testId === 3 && allQuestions[i].id === 10) q10 = allQuestions[i];
+                }
+                var idx4 = allQuestions.indexOf(q4);
+                var idx5 = allQuestions.indexOf(q5);
+                var idx9 = allQuestions.indexOf(q9);
+                var idx10 = allQuestions.indexOf(q10);
+                function isAB(a) { return a === "A" || a === "B"; }
+                profile += "\n关键题目直接指向：";
+                profile += "\n- 第" + q4.globalId + "题：" + (isAB(answers[idx4]) ? "学术或工业界有戏" : "学术路径极其艰难");
+                profile += "\n- 第" + q5.globalId + "题：" + (answers[idx5] === "A" ? "可挑战博士" : "需慎重考虑");
+                profile += "\n- 第" + q9.globalId + "题：" + (isAB(answers[idx9]) ? "工业界高薪研究是可行选项" : "基本限定在学术界或非营利机构");
+                profile += "\n- 第" + q10.globalId + "题：" + (answers[idx10] === "A" ? "短板有弥补可能" : "改变性格和习惯会非常困难");
+            } else if (testId === 1) {
+                var answers1 = [];
+                for (var i = startIdx; i <= endIdx; i++) {
+                    answers1.push(answers[i]);
+                }
+                var countAB = 0;
+                for (var i = 0; i < 3; i++) {
+                    if (answers1[i] === "A" || answers1[i] === "B") countAB++;
+                }
+                profile = "参考评估：";
+                profile += "\n- 学术兴趣维度：" + (countAB >= 2 ? "适合纯理论" : "对应用有一定开放度");
+                profile += "\n- 编程态度：" + (answers1[1] === "A" || answers1[1] === "B" ? "可塑性强，有合作意愿" : "需进一步沟通");
+                profile += "\n- 写作意愿：" + (answers1[3] === "A" || answers1[3] === "B" ? "可塑性高" : "态度问题，更难改变");
+                profile += "\n- 职业选择：" + (answers1[5] === "A" || answers1[5] === "B" ? "可接受学术/工业界写作" : "需现实检查");
+            } else if (testId === 2) {
+                var answers2 = [];
+                for (var i = startIdx; i <= endIdx; i++) {
+                    answers2.push(answers[i]);
+                }
+                profile = "参考评估：";
+                profile += "\n- 学术驱动力：" + (answers2[0] === "D" ? "偏应用/协作型" : "偏理论独立型");
+                profile += "\n- 编程排斥：" + (answers2[2] === "A" ? "情绪排斥，最难改变" : answers2[2] === "D" ? "经验缺失，最易改变" : "态度问题（可干预）");
+                profile += "\n- 风险承受力：" + (answers2[9] === "A" ? "适合读博" : answers2[9] === "C" ? "脆弱，需谨慎" : "有适应性");
+            }
+            return profile;
+        }
+
+        function restartTest() {
+            selectedTests = [];
+            allQuestions = [];
+            currentIdx = 0;
+            answers = {};
+            document.getElementById("result").style.display = "none";
+            document.getElementById("selectScreen").style.display = "block";
+            var cbs = document.querySelectorAll(".test-checkbox");
+            for (var i = 0; i < cbs.length; i++) {
+                cbs[i].classList.remove("checked");
+                cbs[i].querySelector("input").checked = false;
+            }
+            document.getElementById("submitBtn").style.display = "block";
+            document.getElementById("exportBtn").style.display = "none";
+        }
+
+        function exportResult() {
+            var content = document.getElementById("resultContent").textContent;
+            var d = new Date();
+            var yyyy = d.getFullYear();
+            var MM = (d.getMonth() + 1).toString().padStart(2, "0");
+            var dd = d.getDate().toString().padStart(2, "0");
+            var hh = d.getHours().toString().padStart(2, "0");
+            var mm = d.getMinutes().toString().padStart(2, "0");
+            var timestamp = yyyy + MM + dd + hh + mm;
+            var testName = "";
+            var testNameCN = ["", "职业弹性测评", "学术人格素描", "价值观刚性测试"];
+            for (var i = 0; i < selectedTests.length; i++) {
+                if (i > 0) testName += "_";
+                testName += testNameCN[selectedTests[i]];
+            }
+            var blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = testName + "_" + timestamp + ".txt";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

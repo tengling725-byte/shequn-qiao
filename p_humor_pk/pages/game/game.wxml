@@ -1,0 +1,75 @@
+<view class="container">
+  <!-- 倒计时 -->
+  <view wx:if="{{showCountdown > 0}}" class="countdown">
+    <text class="countdown-text">{{showCountdown}}</text>
+  </view>
+
+  <!-- 游戏中 -->
+  <view wx:if="{{isGameStart}}" class="game">
+    <!-- 顶部信息 -->
+    <view class="top-bar">
+      <view class="score">
+        <text>得分: {{score}}</text>
+      </view>
+      <view class="explos {{explos > 1 ? 'explos-active' : ''}}">
+        <text>🔥×{{explos}}</text>
+      </view>
+      <view class="timer {{timeLeft <= 3 ? 'timer-danger' : ''}}">
+        <text>{{timeLeft}}s</text>
+      </view>
+    </view>
+
+    <!-- 题目 -->
+    <view class="question">
+      <text class="question-text">{{currentQuestion.question}}</text>
+      <view class="question-info">
+        <text class="question-num">第{{currentIndex + 1}}题</text>
+        <text wx:if="{{isAnswered}}" class="question-score">+{{lastScore}}</text>
+      </view>
+    </view>
+
+    <!-- 选项 -->
+    <view class="options">
+      <view 
+        wx:for="{{currentQuestion.options}}" 
+        wx:key="id"
+        wx:for-index="idx"
+        class="option {{selectedAnswer === item.id ? (item.humorScore === 5 ? 'correct' : (item.humorScore === 0 ? 'wrong' : 'partial')) : ''}} {{isAnswered && item.humorScore === 5 ? 'show-answer' : ''}}"
+        bindtap="selectAnswer"
+        data-id="{{item.id}}">
+        <text class="option-text">{{item.text}}</text>
+      </view>
+    </view>
+
+    <!-- 复活弹窗 -->
+    <view wx:if="{{showRevive}}" class="revive-modal">
+      <view class="revive-content">
+        <view class="revive-title">⚠️ 需要复活卡</view>
+        <view class="revive-subtitle">当前：{{correctCount}}/10题 · {{score}}分</view>
+        <view class="revive-desc">达标：≥6题 或 ≥100分</view>
+        <view class="revive-btns">
+          <view class="revive-btn" bindtap="shareToFriend">
+            <text class="revive-icon">📱</text>
+            <text>分享好友×1</text>
+          </view>
+          <view class="revive-btn" bindtap="savePoster">
+            <text class="revive-icon">📸</text>
+            <text>分享朋友圈×1</text>
+          </view>
+          <view class="revive-btn" bindtap="watchAd">
+            <text class="revive-icon">📺</text>
+            <text>看广告×1</text>
+          </view>
+        </view>
+        <view class="skip-btn" bindtap="skipQuestion">
+          <text>直接结算</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 结算中 -->
+  <view wx:if="{{isGameOver}}" class="loading">
+    <text>结算中...</text>
+  </view>
+</view>

@@ -1,0 +1,75 @@
+<view class="container">
+  <view class="mode-switch">
+    <view class="mode-item {{mode === 'daily' ? 'active' : ''}}" data-mode="daily" bindtap="switchMode">按日合成</view>
+    <view class="mode-item {{mode === 'custom' ? 'active' : ''}}" data-mode="custom" bindtap="switchMode">自定义合成</view>
+  </view>
+
+  <view class="filters">
+    <view class="filter-item">
+      <picker mode="date" value="{{date}}" bindchange="onDateChange">
+        <view class="picker-trigger">
+          <text>{{date}}</text>
+          <text class="arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+    <view class="filter-item">
+      <picker range="{{categories}}" bindchange="onCategoryChange">
+        <view class="picker-trigger">
+          <text>{{selectedCategory}}</text>
+          <text class="arrow">▼</text>
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <view class="notes-list">
+    <view class="list-header">
+      <text class="count">共 {{notes.length}} 条小条</text>
+      <view class="select-actions">
+        <text class="select-btn" bindtap="selectAllNotes">全选</text>
+        <text class="select-btn" bindtap="deselectAllNotes">取消</text>
+      </view>
+    </view>
+
+    <view class="note-item {{item.checked ? 'checked' : ''}}" wx:for="{{notes}}" wx:key="id" bindtap="toggleNote" data-index="{{index}}">
+      <view class="note-checkbox">
+        <text wx:if="{{item.checked}}">✓</text>
+      </view>
+      <view class="note-content">
+        <text class="note-text">{{item.content}}</text>
+        <view class="note-meta">
+          <text class="note-category">{{item.category}}</text>
+          <text class="note-time">{{item.createdAt}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty" wx:if="{{notes.length === 0}}">
+      <text>暂无小条</text>
+    </view>
+  </view>
+
+  <view class="compose-footer">
+    <text class="selected-count">已选择 {{selectedNotes.length}} 条</text>
+    <button class="btn-compose" bindtap="composeArticle" disabled="{{isComposing}}">
+      {{isComposing ? '合成中...' : '合成文章'}}
+    </button>
+  </view>
+
+  <view class="result-modal" wx:if="{{showResult}}">
+    <view class="modal-content">
+      <view class="modal-header">
+        <text class="modal-title">合成完成</text>
+      </view>
+      <view class="modal-body">
+        <text class="result-title">{{composedTitle}}</text>
+        <text class="result-content">{{composedContent}}</text>
+      </view>
+      <view class="modal-actions">
+        <button class="btn-modal" bindtap="resetCompose">继续选择</button>
+        <button class="btn-modal primary" bindtap="goToArticle">查看文章</button>
+      </view>
+    </view>
+  </view>
+</view>

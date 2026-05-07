@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>匹小爬</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; font-size: 24px; }
+        h2 { color: #333; margin: 20px 0 15px; font-size: 18px; }
+        h3 { color: #666; margin: 15px 0 10px; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        label .required { color: #ff4757; }
+        input[type="text"], select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        input[type="text"]:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
+        textarea { min-height: 100px; resize: vertical; }
+        .hint { font-size: 12px; color: #999; margin-top: 5px; }
+        button {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-download { background: #2ed573; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .error { color: #ff4757; padding: 15px; background: #ffe6e6; border-radius: 8px; margin-bottom: 20px; }
+        .success { color: #2ed573; padding: 15px; background: #e8f8f0; border-radius: 8px; margin-bottom: 20px; }
+        .results-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 15px; }
+        .results-table th, .results-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eee; }
+        .results-table th { background: #f8f9fa; font-weight: 600; color: #555; }
+        .results-table a { color: #667eea; text-decoration: none; }
+        .source-page { font-size: 11px; color: #999; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .total { font-size: 14px; color: #666; margin-top: 10px; }
+        .hidden { display: none; }
+        .mode-section { padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 20px; }
+        .keyword-group { padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 15px; }
+    </style>
+    <script>
+        function toggleMode() {
+            var mode = document.querySelector('input[name="crawl_mode"]:checked').value;
+            var manualSection = document.getElementById('manualSection');
+            if (mode === 'manual') {
+                manualSection.classList.remove('hidden');
+            } else {
+                manualSection.classList.add('hidden');
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>关键词链接爬虫</h1>
+
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+
+            {% if not results %}
+            <form method="POST" action="/crawl">
+                <div class="form-group">
+                    <label>爬取模式</label>
+                    <div class="mode-section">
+                        <label style="display:inline-block;margin-right:20px;">
+                            <input type="radio" name="crawl_mode" value="auto" checked onclick="toggleMode()"> 自动下一页
+                        </label>
+                        <label style="display:inline-block;">
+                            <input type="radio" name="crawl_mode" value="manual" onclick="toggleMode()"> 手动输入
+                        </label>
+                        <div class="hint">自动模式：自动识别并点击"下一页"链接；手动模式：直接输入所有页面URL</div>
+                    </div>
+                </div>
+
+                <div id="manualSection" class="form-group hidden">
+                    <label>所有页面URL（每行一个）<span class="required">*</span></label>
+                    <textarea name="manual_urls" placeholder="https://page1.com
+https://page2.com
+https://page3.com"></textarea>
+                    <div class="hint">每行输入一个URL</div>
+                </div>
+
+                <div class="form-group">
+                    <label>初始URL <span class="required">*</span>（自动模式必填）</label>
+                    <input type="text" name="start_url" value="{{ start_url_value or 'https://ele.pku.edu.cn/xwdt.htm' }}" placeholder="自动模式时使用">
+                </div>
+
+                <div class="keyword-group">
+                    <h3>第一组关键词（必填，OR关系）<span class="required">*</span></h3>
+                    <label>包含任一关键词即匹配（用逗号分隔）</label>
+                    <input type="text" name="keywords1" value="{{ keywords1_value or '进展,突破,成果,奖' }}" placeholder="例如: 进展,突破,成果,奖">
+                </div>
+
+                <div class="keyword-group">
+                    <h3>第二组关键词（可选，与第一组AND关系）</h3>
+                    <label>必须同时包含第一组和第二组的关键词</label>
+                    <input type="text" name="keywords2" value="{{ keywords2_value or '重要,重大,瞩目,卓越,颠覆,首次' }}" placeholder="例如: 重要,重大,瞩目,卓越,颠覆,首次">
+                    <div class="hint">留空则不启用此组筛选</div>
+                </div>
+
+                <div class="keyword-group">
+                    <h3>第三组关键词（可选，与第一组AND关系）</h3>
+                    <label>必须同时包含第一组和第三组的关键词</label>
+                    <input type="text" name="keywords3" placeholder="例如: 科研,成果">
+                    <div class="hint">留空则不启用此组筛选</div>
+                </div>
+
+                <div class="form-group">
+                    <label>下一页关键字（自动模式用，可选）</label>
+                    <input type="text" name="next_keywords" value="下一页,下页,next,Next" placeholder="下一页,下页,next">
+                    <div class="hint">用于识别分页链接，多个用逗号分隔</div>
+                </div>
+
+                <button type="submit" class="btn-primary">开始爬取</button>
+            </form>
+            {% else %}
+
+            <div class="success">✅ 爬取完成！共找到 {{ total }} 个匹配链接</div>
+
+            <h2>结果预览（全部 {{ total }} 条）</h2>
+            <div style="max-height:500px;overflow-y:auto;border:1px solid #ddd;border-radius:8px;">
+            <table class="results-table">
+                <thead>
+                    <tr style="position:sticky;top:0;background:#667eea;color:white;">
+                        <th>链接名称</th>
+                        <th>链接地址</th>
+                        <th>来源页面</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td>{{ r.name }}</td>
+                        <td><a href="{{ r.url }}" target="_blank">{{ r.url }}</a></td>
+                        <td class="source-page"><a href="{{ r.source_page }}" target="_blank" style="color:#999;text-decoration:none;">{{ r.source_page }}</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+
+            <p class="total">共 {{ total }} 条结果</p>
+
+            <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <a href="/download"><button class="btn-download">📥 下载CSV文件</button></a>
+                <a href="/"><button class="btn-secondary">🔄 重新爬取</button></a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

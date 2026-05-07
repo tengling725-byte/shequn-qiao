@@ -1,0 +1,29 @@
+projectId = "kzxufzrbqdnhlxcfozkc"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql-public"]
+extra_search_path = ["public", "conversions"]
+max_rows = 1000
+
+[db]
+port = 5432
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+api_url = "https://kzxufzrbqdnhlxcfozkc.supabase.co"
+
+[inbucket]
+enabled = true
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[edge_runtime]
+enabled = true
+
+[functions.parse]
+verify_jwt = false

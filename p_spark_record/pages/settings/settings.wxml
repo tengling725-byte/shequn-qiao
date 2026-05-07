@@ -1,0 +1,157 @@
+<view class="container">
+  <view class="section">
+    <view class="section-title">账号</view>
+    <view class="menu-item">
+      <text class="menu-label">登录状态</text>
+      <text class="menu-value">{{userInfo ? userInfo.nickName : '未登录'}}</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">数据统计</view>
+    <view class="menu-item">
+      <text class="menu-label">小条数量</text>
+      <text class="menu-value">{{notesCount}} 条</text>
+    </view>
+    <view class="menu-item">
+      <text class="menu-label">文章数量</text>
+      <text class="menu-value">{{articlesCount}} 篇</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">自定义设置</view>
+    <view class="menu-item" bindtap="openCategoryManage">
+      <text class="menu-label">分类管理</text>
+      <text class="menu-arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="openStyleManage">
+      <text class="menu-label">润色风格管理</text>
+      <text class="menu-arrow">></text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">安全设置</view>
+    <view class="menu-item" bindtap="toggleLock">
+      <text class="menu-label">锁屏密码</text>
+      <text class="menu-value {{lockEnabled ? 'active' : ''}}">{{lockEnabled ? '已开启' : '未开启'}}</text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="section-title">数据管理</view>
+    <view class="menu-item" bindtap="exportData">
+      <text class="menu-label">导出数据</text>
+      <text class="menu-arrow">></text>
+    </view>
+    <view class="menu-item" bindtap="importData">
+      <text class="menu-label">导入数据</text>
+      <text class="menu-arrow">></text>
+    </view>
+    <view class="menu-item danger" bindtap="clearData">
+      <text class="menu-label">清空数据</text>
+      <text class="menu-arrow">></text>
+    </view>
+  </view>
+
+  <view class="section">
+    <view class="menu-item" bindtap="logout">
+      <text class="menu-label danger">退出登录</text>
+    </view>
+  </view>
+
+  <view class="set-password-modal" wx:if="{{showSetPassword}}">
+    <view class="modal-mask"></view>
+    <view class="modal-content">
+      <view class="modal-header">设置锁屏密码</view>
+      <view class="modal-body">
+        <input class="password-input" type="number" password placeholder="输入密码（至少4位）" bindinput="onPasswordInput" />
+        <input class="password-input" type="number" password placeholder="确认密码" bindinput="onConfirmPasswordInput" />
+        <text class="error-msg" wx:if="{{passwordError}}">{{passwordError}}</text>
+      </view>
+      <view class="modal-actions">
+        <button class="btn-modal" bindtap="cancelSetPassword">取消</button>
+        <button class="btn-modal primary" bindtap="setPassword">确定</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="manage-modal" wx:if="{{showCategoryManage}}">
+    <view class="modal-mask" bindtap="closeCategoryManage"></view>
+    <view class="modal-content manage-content">
+      <view class="modal-header">
+        <text>分类管理</text>
+        <text class="modal-close" bindtap="closeCategoryManage">×</text>
+      </view>
+      <scroll-view scroll-y class="manage-list">
+        <view class="manage-item" wx:for="{{categories}}" wx:key="index">
+          <text class="manage-item-name">{{item}}</text>
+          <view class="manage-item-actions">
+            <text class="action-edit" bindtap="editCategory" data-index="{{index}}">编辑</text>
+            <text class="action-delete {{item === '生活记事' || item === '工作记事' || item === '点子' || item === '待办' ? 'disabled' : ''}}" 
+                  bindtap="deleteCategory" data-index="{{index}}">删除</text>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="modal-footer">
+        <button class="btn-add" bindtap="addCategory">+ 添加分类</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="manage-modal" wx:if="{{showCategoryModal}}">
+    <view class="modal-mask" bindtap="cancelCategoryModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">{{editCategoryIndex >= 0 ? '编辑分类' : '添加分类'}}</view>
+      <view class="modal-body">
+        <input class="password-input" placeholder="输入分类名称" value="{{editCategoryName}}" bindinput="onCategoryNameInput" />
+      </view>
+      <view class="modal-actions">
+        <button class="btn-modal" bindtap="cancelCategoryModal">取消</button>
+        <button class="btn-modal primary" bindtap="saveCategory">确定</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="manage-modal" wx:if="{{showStyleManage}}">
+    <view class="modal-mask" bindtap="closeStyleManage"></view>
+    <view class="modal-content manage-content">
+      <view class="modal-header">
+        <text>润色风格管理</text>
+        <text class="modal-close" bindtap="closeStyleManage">×</text>
+      </view>
+      <scroll-view scroll-y class="manage-list">
+        <view class="manage-item" wx:for="{{aiStyles}}" wx:key="id">
+          <view class="style-info">
+            <text class="manage-item-name">{{item.name}}</text>
+            <text class="style-prompt">{{item.prompt}}</text>
+          </view>
+          <view class="manage-item-actions">
+            <text class="action-edit" bindtap="editStyle" data-index="{{index}}">编辑</text>
+            <text class="action-delete {{item.isDefault ? 'disabled' : ''}}" 
+                  bindtap="deleteStyle" data-index="{{index}}">删除</text>
+          </view>
+        </view>
+      </scroll-view>
+      <view class="modal-footer">
+        <button class="btn-add" bindtap="addStyle">+ 添加风格</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="manage-modal" wx:if="{{showStyleModal}}">
+    <view class="modal-mask" bindtap="cancelStyleModal"></view>
+    <view class="modal-content">
+      <view class="modal-header">{{editStyleIndex >= 0 ? '编辑风格' : '添加风格'}}</view>
+      <view class="modal-body">
+        <input class="password-input" placeholder="输入风格名称" value="{{editStyleName}}" bindinput="onStyleNameInput" />
+        <textarea class="prompt-input" placeholder="输入润色提示词" value="{{editStylePrompt}}" bindinput="onStylePromptInput" />
+      </view>
+      <view class="modal-actions">
+        <button class="btn-modal" bindtap="cancelStyleModal">取消</button>
+        <button class="btn-modal primary" bindtap="saveStyle">确定</button>
+      </view>
+    </view>
+  </view>
+</view>

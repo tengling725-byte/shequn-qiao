@@ -1,0 +1,24 @@
+<view class="container">
+  <view class="header">
+    <view class="back-btn" bindtap="goBack">← 返回</view>
+    <text class="title">文言豆腐干</text>
+    <view class="fav-btn" bindtap="toggleFavorite">
+      {{favorites.includes(currentIndex) ? '❤️' : '🤍'}}
+    </view>
+  </view>
+
+  <view class="content" bindtouchstart="touchStart" bindtouchend="touchEnd">
+    <view class="card" bindtap="toggleNote">
+      <text class="item-title">{{items[currentIndex].title}}</text>
+      <text class="item-original">{{items[currentIndex].original}}</text>
+      <text wx:if="{{showNote}}" class="item-note">{{items[currentIndex].note}}</text>
+      <text wx:else class="item-tap">点击显示注释</text>
+    </view>
+  </view>
+
+  <view class="footer">
+    <view class="arrow" bindtap="prevItem">◀ 上一条</view>
+    <text class="indicator">{{currentIndex + 1}}/{{items.length}}</text>
+    <view class="arrow" bindtap="nextItem">下一条 ▶</view>
+  </view>
+</view>

@@ -1,0 +1,716 @@
+/* 梗王争霸 - 极简禅意风格 */
+
+/* 全局 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  min-height: 100%;
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+  background: #faf9f7;
+  color: #3a3632;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap');
+
+#app {
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+/* 背景 */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 30% 20%, rgba(180,160,140,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(160,140,120,0.06) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 页面容器 */
+.page {
+  display: none;
+  min-height: 100%;
+  padding: 40px 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.page.active {
+  display: block;
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 首页 */
+#page-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#page-index.active {
+  display: flex;
+}
+
+.container {
+  text-align: center;
+  padding: 20px;
+  width: 100%;
+  max-width: 380px;
+}
+
+/* Logo */
+.logo h1 {
+  font-size: 42px;
+  font-weight: 600;
+  color: #2a2622;
+  margin-bottom: 12px;
+  letter-spacing: 8px;
+  font-family: 'Noto Serif SC', serif;
+}
+
+.logo .subtitle {
+  font-size: 14px;
+  color: #9a9590;
+  margin-bottom: 50px;
+  letter-spacing: 4px;
+}
+
+/* 菜单 */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 50px;
+}
+
+/* 统计 */
+.stats {
+  padding: 25px 30px;
+  border-top: 1px solid #e8e6e3;
+}
+
+.stats p {
+  font-size: 13px;
+  margin: 12px 0;
+  color: #a09a95;
+}
+
+.stats span {
+  color: #4a4540;
+  font-weight: 600;
+  font-size: 22px;
+  margin-left: 8px;
+}
+
+/* 按钮 - 极简禅意 */
+.btn-primary, .btn-secondary, .btn-ai, .btn-tip, .btn-shop, .btn-home, .btn-share, .btn-invite {
+  padding: 16px 32px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: 'Noto Serif SC', serif;
+  transition: all 0.3s ease;
+  letter-spacing: 2px;
+}
+
+.btn-primary {
+  background: #2a2622;
+  color: #faf9f7;
+}
+
+.btn-primary:hover {
+  background: #4a4540;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #6a6560;
+  border: 1px solid #d8d5d2;
+}
+
+.btn-secondary:hover {
+  border-color: #4a4540;
+  color: #3a3632;
+}
+
+.btn-ai {
+  background: transparent;
+  color: #7a8a99;
+  border: 1px solid #c8d0d8;
+}
+
+.btn-tip {
+  background: transparent;
+  color: #8a7a6a;
+  border: 1px solid #d0c8c0;
+}
+
+.btn-shop {
+  background: transparent;
+  color: #9a7a6a;
+  border: 1px solid #d8cec8;
+}
+
+.btn-home {
+  background: transparent;
+  color: #999590;
+}
+
+.btn-share, .btn-invite {
+  background: #3a3632;
+  color: #faf9f7;
+}
+
+/* 游戏页 */
+.game-container {
+  padding: 10px 15px;
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e8e6e3;
+}
+
+.score, .explos {
+  font-size: 13px;
+  color: #a09a95;
+  letter-spacing: 1px;
+}
+
+.score { color: #4a4540; }
+.explos { color: #b58a7a; }
+
+.timer {
+  font-size: 22px;
+  font-weight: 600;
+  color: #3a3632;
+  font-family: 'Noto Serif SC', serif;
+}
+
+.timer-danger {
+  color: #c45050;
+}
+
+/* 题目区域 */
+.question-area {
+  padding: 10px 10px;
+  margin-bottom: 12px;
+}
+
+.question {
+  font-size: 18px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  color: #2a2622;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.question-info {
+  display: flex;
+  justify-content: space-between;
+  color: #a09a95;
+  font-size: 12px;
+}
+
+.score-gain {
+  color: #6a8a6a;
+}
+
+/* 选项 */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 0 10px;
+  box-sizing: border-box;
+}
+
+.option {
+  padding: 14px 16px;
+  background: transparent;
+  border: 1px solid #e0ddd9;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #5a5550;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+}
+
+.option:hover {
+  background: #f5f3f0;
+  border-color: #c0bdb8;
+  color: #3a3632;
+}
+
+.option.correct {
+  background: #e8f0e8;
+  border-color: #6a8a6a;
+  color: #4a5a4a;
+}
+
+.option.wrong {
+  background: #f5e8e8;
+  border-color: #c48080;
+  color: #8a4a4a;
+}
+
+.option.partial {
+  background: #f5f0e0;
+  border-color: #c4b060;
+  color: #8a7a40;
+}
+
+.option.show-answer {
+  background: #e8f0e8;
+  border-color: #6a8a6a;
+}
+
+/* 结果页 */
+.result-container {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.result-card {
+  background: transparent;
+  padding: 30px 0;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.rating {
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  line-height: 60px;
+  background: #f5f3f0;
+  font-size: 28px;
+  font-weight: 600;
+  color: #5a5550;
+  margin-bottom: 20px;
+  letter-spacing: 0;
+}
+
+.rating.S { color: #8a7a40; }
+.rating.A { color: #5a7a5a; }
+.rating.B { color: #5a6a7a; }
+.rating.C { color: #8a7a5a; }
+.rating.D { color: #8a6a5a; }
+
+.tag-badge {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #f5f3f0;
+  color: #6a6560;
+  font-size: 13px;
+  margin: 15px 0;
+}
+
+.result-card .score {
+  font-size: 48px;
+  color: #2a2622;
+  font-weight: 600;
+  background: none;
+  padding: 0;
+  font-family: 'Noto Serif SC', serif;
+}
+
+.result-card .score-label {
+  color: #9a9590;
+  font-size: 12px;
+  letter-spacing: 4px;
+  margin-top: 8px;
+}
+
+.explos-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  background: #f8f5f0;
+  color: #a08070;
+  margin: 12px 0;
+}
+
+.new-record {
+  display: inline-block;
+  padding: 10px 20px;
+  background: #2a2622;
+  color: #faf9f7;
+  font-size: 13px;
+  letter-spacing: 4px;
+}
+
+.stats {
+  margin-top: 30px;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid #e8e6e3;
+  color: #7a7570;
+  font-size: 14px;
+}
+
+.stat-row:last-child { border-bottom: none; }
+
+.stat-row span:last-child {
+  color: #3a3632;
+  font-weight: 500;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+/* 弹窗 */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(250,249,247,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.modal-content {
+  background: #faf9f7;
+  padding: 40px;
+  width: 90%;
+  max-width: 380px;
+}
+
+.modal-title {
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 30px;
+  color: #3a3632;
+  letter-spacing: 4px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e8e6e3;
+  font-family: 'Noto Serif SC', serif;
+}
+
+.modal-text {
+  line-height: 2;
+  white-space: pre-wrap;
+  margin-bottom: 30px;
+  color: #5a5550;
+  font-size: 15px;
+}
+
+.modal-arrows {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 25px;
+}
+
+.modal-arrows button {
+  padding: 12px 24px;
+  background: transparent;
+  border: 1px solid #d0ccc8;
+  color: #6a6560;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.modal-close {
+  width: 100%;
+  padding: 16px;
+  background: #3a3632;
+  border: none;
+  color: #faf9f7;
+  font-size: 13px;
+  letter-spacing: 4px;
+  cursor: pointer;
+}
+
+/* 名句/文言页面 */
+.quotes-container, .wenyan-container {
+  padding: 30px 20px;
+  height: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e8e6e3;
+}
+
+.back-btn {
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #8a8580;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.header h2 {
+  flex: 1;
+  text-align: center;
+  margin-right: 60px;
+  color: #3a3632;
+  font-size: 18px;
+  letter-spacing: 4px;
+}
+
+.quote-card, .wenyan-card {
+  background: #faf9f7;
+  padding: 35px;
+  margin-bottom: 30px;
+}
+
+.quote-text {
+  font-size: 18px;
+  line-height: 2;
+  margin-bottom: 25px;
+  color: #3a3632;
+  font-style: italic;
+}
+
+.quote-author {
+  color: #9a9590;
+  text-align: right;
+  font-size: 14px;
+}
+
+.wenyan-card h3 {
+  color: #4a4540;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.wenyan-original {
+  font-size: 15px;
+  line-height: 2;
+  color: #5a5550;
+}
+
+.wenyan-note {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #8a8580;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e8e6e3;
+}
+
+.wenyan-tap {
+  color: #a09a95;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 18px;
+}
+
+.quote-nav button, .wenyan-nav button {
+  padding: 12px 20px;
+  background: transparent;
+  border: 1px solid #d8d5d2;
+  color: #7a7570;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* 商店 */
+.shop-container {
+  padding: 30px 20px;
+  height: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.shop-content {
+  padding: 30px;
+  text-align: center;
+  color: #9a9590;
+}
+
+.shop-items {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 25px;
+}
+
+.shop-item {
+  background: #faf9f7;
+  border: 1px solid #e8e6e3;
+  padding: 25px 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.shop-item:hover {
+  border-color: #c0bdb8;
+  background: #f5f3f0;
+}
+
+.shop-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.shop-name {
+  font-size: 14px;
+  color: #4a4540;
+  margin-bottom: 6px;
+}
+
+.shop-desc {
+  font-size: 12px;
+  color: #9a9590;
+}
+
+.joke-box {
+  background: #f5f3f0;
+  padding: 25px;
+  margin-top: 25px;
+  text-align: center;
+}
+
+.joke-box p {
+  font-size: 15px;
+  line-height: 1.8;
+  margin-bottom: 20px;
+  color: #5a5550;
+}
+
+.joke-box button {
+  padding: 12px 24px;
+  background: #3a3632;
+  border: none;
+  color: #faf9f7;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* 排行榜 */
+.rank-section {
+  margin-top: 30px;
+  padding: 25px;
+  background: #f5f3f0;
+}
+
+.rank-section h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #5a5550;
+  letter-spacing: 4px;
+  font-size: 14px;
+}
+
+.rank-list {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.rank-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid #e8e6e3;
+}
+
+.rank-item:last-child { border-bottom: none; }
+
+.rank-me {
+  background: transparent;
+}
+
+.rank-num {
+  width: 30px;
+  color: #9a9590;
+  font-size: 14px;
+}
+
+.rank-score {
+  flex: 1;
+  text-align: right;
+  color: #4a4540;
+}
+
+.rank-tag {
+  width: 90px;
+  text-align: right;
+  color: #8a8580;
+  font-size: 12px;
+}
+
+.rank-empty {
+  text-align: center;
+  color: #a09a95;
+  padding: 20px;
+}
+
+/* 分享按钮 */
+.share-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.btn-share-wechat { background: #5a8a6a; color: #faf9f7; }
+.btn-share-moments { background: #5a7a8a; color: #faf9f7; }
+.btn-copy-link { background: #6a6a7a; color: #faf9f7; }
+
+/* 响应式 */
+@media (max-width: 400px) {
+  .logo h1 { font-size: 32px; letter-spacing: 4px; }
+  .question { font-size: 17px; }
+  .option { font-size: 14px; }
+  .btn-primary, .btn-secondary { padding: 14px 24px; }
+}

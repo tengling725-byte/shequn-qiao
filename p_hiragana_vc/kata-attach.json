@@ -1,0 +1,218 @@
+[
+  {
+    "katakana": "は",
+    "meaning": "提示主语（谁 / 什么）",
+    "exampleJP": "私は本を読みます",
+    "exampleCN": "我看书"
+  },
+  {
+    "katakana": "が",
+    "meaning": "强调主语、小主语",
+    "exampleJP": "雨が降る／彼が好きです",
+    "exampleCN": "下雨了／我喜欢他"
+  },
+  {
+    "katakana": "を",
+    "meaning": "提示宾语（做什么）",
+    "exampleJP": "本を読む／コーヒーを飲む",
+    "exampleCN": "看书／喝咖啡"
+  },
+  {
+    "katakana": "の",
+    "meaning": "表所属（的）",
+    "exampleJP": "私の本／会社の規則",
+    "exampleCN": "我的书／公司的规定"
+  },
+  {
+    "katakana": "に",
+    "meaning": "地点 / 方向 / 对象（在 / 向 / 给）",
+    "exampleJP": "家に帰る／友達に送る／3 時に会う",
+    "exampleCN": "回家／给朋友送（东西）／3 点见面"
+  },
+  {
+    "katakana": "で",
+    "meaning": "地点 / 方式（在… 地方 / 用…）",
+    "exampleJP": "公園で遊ぶ／ペンで書く／車で行く",
+    "exampleCN": "在公园玩／用钢笔写／开车去"
+  },
+  {
+    "katakana": "と",
+    "meaning": "和… 一起 / 列举 / 引用",
+    "exampleJP": "友達と行く／りんごとバナナ／「好き」と言う",
+    "exampleCN": "和朋友去／苹果和香蕉／说 “喜欢”"
+  },
+  {
+    "katakana": "へ",
+    "meaning": "方向（去往…）",
+    "exampleJP": "東京へ行く／学校へ向かう",
+    "exampleCN": "去东京／朝学校走去"
+  },
+  {
+    "katakana": "から",
+    "meaning": "从…（时间 / 地点 / 来源）",
+    "exampleJP": "9 時から／学校から帰る／彼から聞く",
+    "exampleCN": "从 9 点开始／从学校回家／听他说"
+  },
+  {
+    "katakana": "まで",
+    "meaning": "到… 为止（时间 / 地点）",
+    "exampleJP": "5 時まで／駅まで歩く",
+    "exampleCN": "到 5 点为止／走到车站"
+  },
+  {
+    "katakana": "も",
+    "meaning": "也",
+    "exampleJP": "私も行く／彼も学生です",
+    "exampleCN": "我也去／他也是学生"
+  },
+  {
+    "katakana": "より",
+    "meaning": "比…/ 与其… 不如",
+    "exampleJP": "彼より高い／本より映画が好き",
+    "exampleCN": "比他高／比起书更喜欢电影"
+  },
+  {
+    "katakana": "ほど",
+    "meaning": "程度（… 左右 / 像… 一样）",
+    "exampleJP": "日本ほど小さい／3 時間ほどかかる",
+    "exampleCN": "像日本一样小／花费 3 小时左右"
+  },
+  {
+    "katakana": "か",
+    "meaning": "疑问（吗 / 是否）/ 不确定",
+    "exampleJP": "行くか？／誰か来た",
+    "exampleCN": "去吗？／有人来了"
+  },
+  {
+    "katakana": "ので",
+    "meaning": "原因（因为，普通口语）",
+    "exampleJP": "雨が降るので、行かない",
+    "exampleCN": "因为下雨，所以不去"
+  },
+  {
+    "katakana": "ため",
+    "meaning": "原因（因为，正式）/ 为了",
+    "exampleJP": "仕事のため遅刻／健康のため運動",
+    "exampleCN": "因为工作迟到／为了健康运动"
+  },
+  {
+    "katakana": "ば",
+    "meaning": "如果（假设）",
+    "exampleJP": "雨が降れば、行かない",
+    "exampleCN": "如果下雨，就不去"
+  },
+  {
+    "katakana": "とき",
+    "meaning": "… 的时候",
+    "exampleJP": "食事をするとき／休みのとき",
+    "exampleCN": "吃饭的时候／休息的时候"
+  },
+  {
+    "katakana": "間",
+    "meaning": "… 期间（持续）",
+    "exampleJP": "仕事の間／雨が降っている間",
+    "exampleCN": "工作期间／下雨的期间"
+  },
+  {
+    "katakana": "以外",
+    "meaning": "除了… 之外",
+    "exampleJP": "彼以外、誰も知らない",
+    "exampleCN": "除了他，没人知道"
+  },
+  {
+    "katakana": "以内",
+    "meaning": "在… 之内",
+    "exampleJP": "3 日以内に返す",
+    "exampleCN": "3 天内归还"
+  },
+  {
+    "katakana": "以上",
+    "meaning": "超过 / 以上",
+    "exampleJP": "10 人以上／高校卒業以上",
+    "exampleCN": "10 人以上／高中以上学历"
+  },
+  {
+    "katakana": "以下",
+    "meaning": "低于 / 以下",
+    "exampleJP": "5 歳以下／1 万円以下",
+    "exampleCN": "5 岁以下／1 万日元以下"
+  },
+  {
+    "katakana": "別途",
+    "meaning": "另外、另行",
+    "exampleJP": "別途連絡する",
+    "exampleCN": "另行联系"
+  },
+  {
+    "katakana": "同様",
+    "meaning": "同样、一样",
+    "exampleJP": "彼と同様の意見",
+    "exampleCN": "和他同样的意见"
+  },
+  {
+    "katakana": "各種",
+    "meaning": "各种、各类",
+    "exampleJP": "各種商品を取り扱う",
+    "exampleCN": "经营各种商品"
+  },
+  {
+    "katakana": "複数",
+    "meaning": "多个、复数",
+    "exampleJP": "複数の人が参加",
+    "exampleCN": "多个人参加"
+  },
+  {
+    "katakana": "単数",
+    "meaning": "单个、单数",
+    "exampleJP": "単数の回答を求める",
+    "exampleCN": "要求单个回答"
+  },
+  {
+    "katakana": "ます",
+    "meaning": "动词礼貌结尾",
+    "exampleJP": "行く→行きます／食べる→食べます",
+    "exampleCN": "去→去（礼貌）／吃→吃（礼貌）"
+  },
+  {
+    "katakana": "です",
+    "meaning": "形容词 / 名词礼貌结尾",
+    "exampleJP": "高い→高いです／学生→学生です",
+    "exampleCN": "高→高（礼貌）／学生→是学生"
+  },
+  {
+    "katakana": "ない",
+    "meaning": "否定（不…）",
+    "exampleJP": "行く→行かない／食べる→食べない",
+    "exampleCN": "不去／不吃"
+  },
+  {
+    "katakana": "ません",
+    "meaning": "礼貌否定（不…）",
+    "exampleJP": "行く→行きません／食べる→食べません",
+    "exampleCN": "不去（礼貌）／不吃（礼貌）"
+  },
+  {
+    "katakana": "た",
+    "meaning": "过去式（… 了）",
+    "exampleJP": "行く→行った／食べる→食べた",
+    "exampleCN": "去了／吃了"
+  },
+  {
+    "katakana": "ました",
+    "meaning": "礼貌过去式（… 了）",
+    "exampleJP": "行く→行きました／食べる→食べました",
+    "exampleCN": "去了（礼貌）／吃了（礼貌）"
+  },
+  {
+    "katakana": "たい",
+    "meaning": "想要…（主语是自己）",
+    "exampleJP": "食べる→食べたい／行く→行きたい",
+    "exampleCN": "想吃／想去"
+  },
+  {
+    "katakana": "たがる",
+    "meaning": "想要…（主语是别人）",
+    "exampleJP": "彼は食べたがる／友達は",
+    "exampleCN": ""
+  }
+]

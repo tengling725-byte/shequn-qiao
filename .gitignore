@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+ENV/
+env/
+
+# Node
+node_modules/
+package-lock.json
+yarn.lock
+.npm/
+
+# 日志 / 临时文件
+*.log
+temp/
+tmp/
+temp_download/
+downloads/
+
+# IDE
+.idea/
+.vscode/
+!.vscode/extensions.json
+.claude/
+.settings/
+*.swp
+*.swo
+
+# 数据库 / 数据
+*.db
+*.sqlite
+*.sqlite3
+data/
+database/
+
+# 文档 / 数据文件
+*.csv
+*.doc
+*.docx
+*.pdf
+*.ppt
+*.pptx
+*.xls
+*.xlsx
+*.txt
+
+# 压缩包 / 备份
+*.zip
+*.rar
+*.tar.gz
+backups/
+backup/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# 环境变量 / 私密配置
+.env
+.env.local
+.env.development
+.env.production
+config.json
+secret.json
+
+# 自定义本地目录（自己的）
+r_*/

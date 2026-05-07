@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日语学习工具</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 650px;
+            width: 100%;
+        }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; font-size: 28px; }
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .menu-btn {
+            padding: 30px 20px;
+            font-size: 20px;
+            background: #f5f5f5;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .menu-btn:hover { background: #e8e8e8; transform: translateY(-3px); border-color: #667eea; }
+        .menu-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .menu-btn .subtitle { font-size: 14px; color: #888; margin-top: 8px; }
+        .menu-btn .count { font-size: 12px; color: #4CAF50; margin-top: 5px; }
+        .progress { text-align: center; color: #666; margin-bottom: 20px; font-size: 18px; }
+        .score-display { text-align: center; color: #666; margin-bottom: 15px; font-size: 16px; }
+        .auto-mode { text-align: center; margin-bottom: 15px; }
+        .auto-mode button {
+            padding: 8px 15px;
+            margin: 3px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: #f5f5f5;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .auto-mode button:hover { background: #e8e8e8; }
+        .auto-mode button.active { background: #667eea; color: white; border-color: #667eea; }
+        .question-box { margin: 30px 0; text-align: center; }
+        .question-text { font-size: 18px; color: #666; margin-bottom: 15px; }
+        .word { font-size: 48px; color: #333; font-weight: bold; padding: 20px; background: #f8f9fa; border-radius: 12px; }
+        .sentence { font-size: 28px; color: #333; padding: 20px; background: #f8f9fa; border-radius: 12px; line-height: 1.8; }
+        .sentence .highlight { color: #e91e63; font-weight: bold; }
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .option {
+            padding: 15px 20px;
+            font-size: 18px;
+            background: #f5f5f5;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .option:hover { background: #e8e8e8; transform: translateX(5px); }
+        .option.correct { background: #4CAF50; color: white; border-color: #4CAF50; }
+        .option.wrong { background: #f44336; color: white; border-color: #f44336; }
+        .option.disabled { pointer-events: none; }
+        .result-info { margin-top: 20px; padding: 20px; background: #fff3e0; border-radius: 12px; text-align: left; }
+        .result-info .label { font-weight: bold; color: #333; margin-bottom: 5px; }
+        .result-info .value { color: #666; margin-bottom: 15px; font-size: 16px; }
+        .score-box { text-align: center; padding: 30px; }
+        .score { font-size: 60px; color: #667eea; font-weight: bold; }
+        .score-label { font-size: 18px; color: #666; margin-top: 10px; }
+        .result-message { font-size: 24px; color: #333; margin: 20px 0; }
+        .btn {
+            background: #667eea; color: white; border: none;
+            padding: 15px 40px; font-size: 18px;
+            border-radius: 10px; cursor: pointer; margin-top: 20px;
+            transition: all 0.2s;
+        }
+        .btn:hover { background: #5a6fd6; transform: translateY(-2px); }
+        .btn-next { background: #4CAF50; }
+        .btn-next:hover { background: #45a049; }
+        .btn-home { background: #ff9800; }
+        .btn-home:hover { background: #f57c00; }
+        .btn-reset { background: #f44336; }
+        .btn-reset:hover { background: #d32f2f; }
+        .hidden { display: none; }
+    </style>
+    <script src="vocab_data.js"></script>
+    <script src="kata-hiragana-deepseek.js"></script>
+</head>
+<body>
+    <div class="container" id="startScreen">
+        <h1>日语学习工具</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            选择学习内容<br>
+            每次20题 · 优先抽取未答或答错的题目
+        </p>
+        <div class="menu">
+            <button class="menu-btn" onclick="startQuiz('kanji')">
+                汉字学习
+                <div class="subtitle">日语汉字 vs 中文意思</div>
+                <div class="count" id="count-kanji"></div>
+            </button>
+            <button class="menu-btn" onclick="startQuiz('kata-attach')">
+                片假名黏附词
+                <div class="subtitle">助词、助动词</div>
+                <div class="count" id="count-kata-attach"></div>
+            </button>
+            <button class="menu-btn" onclick="startQuiz('kata-deepseek')">
+                平假名DeepSeek
+                <div class="subtitle">假名在句中的含义</div>
+                <div class="count" id="count-kata-deepseek"></div>
+            </button>
+            <button class="menu-btn" onclick="startQuiz('kata-content')">
+                片假名实词
+                <div class="subtitle">名词、动词、形容词</div>
+                <div class="count">内置词库</div>
+            </button>
+            <button class="menu-btn" onclick="startQuiz('hiragana')">
+                平假名
+                <div class="subtitle">假名在句中的含义</div>
+                <div class="count">内置词库</div>
+            </button>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn btn-reset" onclick="resetProgress()">重置学习进度</button>
+        </div>
+    </div>
+
+    <div class="container hidden" id="quizScreen">
+        <div class="score-display">
+            正确: <span id="correctCount" style="color: #4CAF50; font-weight: bold;">0</span> | 
+            错误: <span id="wrongCount" style="color: #f44336; font-weight: bold;">0</span>
+        </div>
+        <div class="auto-mode">
+            <button onclick="setAutoMode(0)" id="btn-auto-0">手动</button>
+            <button onclick="setAutoMode(1)" id="btn-auto-1">1秒</button>
+            <button onclick="setAutoMode(3)" id="btn-auto-3">3秒</button>
+            <button onclick="setAutoMode(5)" id="btn-auto-5">5秒</button>
+        </div>
+        <div class="progress">第 <span id="currentNum">1</span> / 20 题</div>
+        <div class="question-box">
+            <div class="question-text" id="questionText">这个词语的含义是？</div>
+            <div id="questionContent"></div>
+        </div>
+        <div class="options" id="options"></div>
+        <div class="result-info hidden" id="resultInfo">
+            <div class="value" id="resultValue"></div>
+            <div style="text-align: center;">
+                <button class="btn btn-next" id="btnNext" onclick="nextQuestion()">下一题</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container hidden" id="resultScreen">
+        <div class="score-box">
+            <div class="score" id="finalScore"></div>
+            <div class="score-label">分 / 20分</div>
+            <div class="result-message" id="resultMessage"></div>
+            <div style="margin-top: 20px; color: #666;">
+                正确: <span id="finalCorrect" style="color: #4CAF50; font-weight: bold;">0</span> | 
+                错误: <span id="finalWrong" style="color: #f44336; font-weight: bold;">0</span>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn" onclick="startQuiz(currentMode)">再来一次</button>
+                <button class="btn btn-home" onclick="goHome()">返回首页</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let kataContentData = [];
+        let hiraganaData = [];
+
+        const kataContentDataBuiltIn = [
+            { hiragana: 'あ', romaji: 'a', sentence: '<span class="highlight">あ</span>りがとうございます。', answer: '谢谢', sentenceCN: '非常感谢。' },
+            { hiragana: 'い', romaji: 'i', sentence: 'これは<span class="highlight">い</span>ぬですか。', answer: '狗', sentenceCN: '这是狗吗？' },
+            { hiragana: 'う', romaji: 'u', sentence: '<span class="highlight">う</span>みに行く。', answer: '海', sentenceCN: '去海边。' },
+            { hiragana: 'え', romaji: 'e', sentence: '<span class="highlight">え</span>きまで歩く。', answer: '车站', sentenceCN: '走到车站。' },
+            { hiragana: 'お', romaji: 'o', sentence: '<span class="highlight">お</span>茶を飲む。', answer: '茶', sentenceCN: '喝茶。' },
+            { hiragana: 'か', romaji: 'ka', sentence: '<span class="highlight">か</span>いものに行く。', answer: '买东西', sentenceCN: '去买东西。' },
+            { hiragana: 'き', romaji: 'ki', sentence: '<span class="highlight">き</span>たに上げる。', answer: '给', sentenceCN: '给妈妈。' },
+            { hiragana: 'く', romaji: 'ku', sentence: '友達が<span class="highlight">く</span>る。', answer: '来', sentenceCN: '朋友来。' },
+            { hiragana: 'け', romaji: 'ke', sentence: '<span class="highlight">け</span>さ起きた。', answer: '早上', sentenceCN: '早上起来了。' },
+            { hiragana: 'こ', romaji: 'ko', sentence: '<span class="highlight">こ</span>どもだ。', answer: '孩子', sentenceCN: '是孩子。' },
+            { hiragana: 'さ', romaji: 'sa', sentence: '<span class="highlight">さ</span>かなを食べる。', answer: '鱼', sentenceCN: '吃鱼。' },
+            { hiragana: 'し', romaji: 'shi', sentence: '<span class="highlight">し</span>ごとをする。', answer: '工作', sentenceCN: '工作。' },
+            { hiragana: 'す', romaji: 'su', sentence: '<span class="highlight">す</span>しを食べる。', answer: '寿司', sentenceCN: '吃寿司。' },
+            { hiragana: 'せ', romaji: 'se', sentence: '<span class="highlight">せ</span>んせいにする。', answer: '老师', sentenceCN: '成为老师。' },
+            { hiragana: 'そ', romaji: 'so', sentence: '<span class="highlight">そ</span>らをみる。', answer: '天空', sentenceCN: '看天空。' },
+            { hiragana: 'た', romaji: 'ta', sentence: 'ごはんを<span class="highlight">た</span>べる。', answer: '吃', sentenceCN: '吃饭。' },
+            { hiragana: 'ち', romaji: 'chi', sentence: '<span class="highlight">ち</span>いさい。', answer: '小', sentenceCN: '小。' },
+            { hiragana: 'つ', romaji: 'tsu', sentence: '<span class="highlight">つ</span>くる。', answer: '制作', sentenceCN: '制作。' },
+            { hiragana: 'て', romaji: 'te', sentence: '<span class="highlight">て</span>纸を書く。', answer: '信', sentenceCN: '写信。' },
+            { hiragana: 'と', romaji: 'to', sentence: '私<span class="highlight">と</span>友達。', answer: '和', sentenceCN: '我和朋友。' },
+            { hiragana: 'な', romaji: 'na', sentence: '<span class="highlight">な</span>つが来る。', answer: '夏天', sentenceCN: '夏天来。' },
+            { hiragana: 'に', romaji: 'ni', sentence: '<span class="highlight">に</span>ほんに行く。', answer: '日本', sentenceCN: '去日本。' },
+            { hiragana: 'ぬ', romaji: 'nu', sentence: '<span class="highlight">ぬ</span>いぐるみ。', answer: '玩偶', sentenceCN: '布娃娃。' },
+            { hiragana: 'ね', romaji: 'ne', sentence: '漂亮<span class="highlight">ね</span>。', answer: '呀', sentenceCN: '真美呀。' },
+            { hiragana: 'の', romaji: 'no', sentence: '本<span class="highlight">の</span>机。', answer: '的', sentenceCN: '书的桌子。' },
+            { hiragana: 'は', romaji: 'ha', sentence: '私<span class="highlight">は</span>学生。', answer: '是', sentenceCN: '我是学生。' },
+            { hiragana: 'ひ', romaji: 'hi', sentence: '<span class="highlight">ひ</span>とりが多い。', answer: '人', sentenceCN: '人很多。' },
+            { hiragana: 'ふ', romaji: 'fu', sentence: '<span class="highlight">ふ</span>ゆが寒い。', answer: '冬天', sentenceCN: '冬天冷。' },
+            { hiragana: 'へ', romaji: 'he', sentence: '学校<span class="highlight">へ</span>行く。', answer: '去', sentenceCN: '去学校。' },
+            { hiragana: 'ほ', romaji: 'ho', sentence: '<span class="highlight">ほ</span>んを読む。', answer: '书', sentenceCN: '读书。' },
+            { hiragana: 'ま', romaji: 'ma', sentence: '<span class="highlight">ま</span>どを開ける。', answer: '窗户', sentenceCN: '开窗户。' },
+            { hiragana: 'み', romaji: 'mi', sentence: '<span class="highlight">み</span>み이다。', answer: '耳朵', sentenceCN: '耳朵。' },
+            { hiragana: 'む', romaji: 'mu', sentence: '<span class="highlight">む</span>らす。', answer: '村', sentenceCN: '村庄。' },
+            { hiragana: 'め', romaji: 'me', sentence: '<span class="highlight">め</span>を開ける。', answer: '眼睛', sentenceCN: '睁眼。' },
+            { hiragana: 'も', romaji: 'mo', sentence: '英語<span class="highlight">も</span>できる。', answer: '也', sentenceCN: '也会英语。' },
+            { hiragana: 'や', romaji: 'ya', sentence: '<span class="highlight">や</span>まに登る。', answer: '山', sentenceCN: '登山。' },
+            { hiragana: 'ゆ', romaji: 'yu', sentence: '<span class="highlight">ゆ</span>きが降る。', answer: '雪', sentenceCN: '下雪。' },
+            { hiragana: 'よ', romaji: 'yo', sentence: '<span class="highlight">よ</span>るだ。', answer: '夜', sentenceCN: '是夜晚。' },
+            { hiragana: 'ら', romaji: 'ra', sentence: '<span class="highlight">ら</span>いねんだ。', answer: '明年', sentenceCN: '明年。' },
+            { hiragana: 'り', romaji: 'ri', sentence: '<span class="highlight">り</span>んごを食べる。', answer: '苹果', sentenceCN: '吃苹果。' },
+            { hiragana: 'る', romaji: 'ru', sentence: '<span class="highlight">る</span>す。', answer: '在', sentenceCN: '在。' },
+            { hiragana: 'れ', romaji: 're', sentence: '<span class="highlight">れ</span>きいだ。', answer: '漂亮', sentenceCN: '漂亮。' },
+            { hiragana: 'ろ', romaji: 'ro', sentence: '<span class="highlight">ろ</span>ぐん。', answer: '六', sentenceCN: '六军。' },
+            { hiragana: 'わ', romaji: 'wa', sentence: '<span class="highlight">わ</span>たし。', answer: '我', sentenceCN: '我。' },
+            { hiragana: 'を', romaji: 'wo', sentence: '本<span class="highlight">を</span>読む。', answer: '宾语助词', sentenceCN: '读书。' },
+            { hiragana: 'ん', romaji: 'n', sentence: ' 分からない<span class="highlight">ん</span>だ。', answer: '的', sentenceCN: '不知道。' }
+        ];
+
+        const hiraganaDataBuiltIn = [
+            { hiragana: 'あ', romaji: 'a', sentence: 'あの子は<span class="highlight">あ</span>めを食べている。', answer: '糖', sentenceCN: '那个孩子在吃糖。' },
+            { hiragana: 'あ', romaji: 'a', sentence: '<span class="highlight">あ</span>きは涼しくなった。', answer: '秋', sentenceCN: '秋天变凉了。' },
+            { hiragana: 'あ', romaji: 'a', sentence: '<span class="highlight">あ</span>に看电影去了。', answer: '哥哥', sentenceCN: '哥哥看电影去了。' },
+            { hiragana: 'あ', romaji: 'a', sentence: '<span class="highlight">あ</span>りがとう。', answer: '谢谢', sentenceCN: '谢谢。' },
+            { hiragana: 'い', romaji: 'i', sentence: '<span class="highlight">い</span>ぬが庭にいる。', answer: '狗', sentenceCN: '狗在院子里。' },
+            { hiragana: 'い', romaji: 'i', sentence: 'この言葉の<span class="highlight">い</span>みは何ですか。', answer: '意思', sentenceCN: '这个词的意思是什么？' },
+            { hiragana: 'い', romaji: 'i', sentence: '毎日学校に<span class="highlight">い</span>く。', answer: '去', sentenceCN: '每天去学校。' },
+            { hiragana: 'う', romaji: 'u', sentence: '<span class="highlight">う</span>みへ遊びに行く。', answer: '海', sentenceCN: '去海边玩。' },
+            { hiragana: 'う', romaji: 'u', sentence: 'この음악は<span class="highlight">う</span>るさい。', answer: '吵', sentenceCN: '这音乐真吵。' },
+            { hiragana: 'え', romaji: 'e', sentence: '<span class="highlight">え</span>きまで歩いて行く。', answer: '站', sentenceCN: '走路去车站。' },
+            { hiragana: 'え', romaji: 'e', sentence: '友達と<span class="highlight">え</span>いがを見る。', answer: '电影', sentenceCN: '和朋友看电影。' },
+            { hiragana: 'お', romaji: 'o', sentence: '<span class="highlight">お</span>茶を飲みます。', answer: '茶', sentenceCN: '喝茶。' },
+            { hiragana: 'お', romaji: 'o', sentence: '<span class="highlight">お</span>はようございます。', answer: '早', sentenceCN: '早上好。' },
+            { hiragana: 'か', romaji: 'ka', sentence: '友達と<span class="highlight">か</span>いものに行く。', answer: '买东西', sentenceCN: '和朋友去买东西。' },
+            { hiragana: 'か', romaji: 'ka', sentence: '<span class="highlight">か</span>ぜを引いた。', answer: '感冒', sentenceCN: '感冒了。' },
+            { hiragana: 'き', romaji: 'ki', sentence: '<span class="highlight">き</span>たにパンを買った。', answer: '妈妈', sentenceCN: '给妈妈买了面包。' },
+            { hiragana: 'く', romaji: 'ku', sentence: '友達が<span class="highlight">く</span>る。', answer: '来', sentenceCN: '朋友要来。' },
+            { hiragana: 'け', romaji: 'ke', sentence: '<span class="highlight">け</span>さ六時に起きた。', answer: '早上', sentenceCN: '早上六点起床了。' },
+            { hiragana: 'こ', romaji: 'ko', sentence: '<span class="highlight">こ</span>どもが遊んでいる。', answer: '孩子', sentenceCN: '孩子在玩耍。' },
+            { hiragana: 'さ', romaji: 'sa', sentence: '<span class="highlight">さ</span>かなを烤る。', answer: '鱼', sentenceCN: '烤鱼。' },
+            { hiragana: 'し', romaji: 'shi', sentence: '<span class="highlight">し</span>ごとが忙しい。', answer: '工作', sentenceCN: '工作很忙。' },
+            { hiragana: 'す', romaji: 'su', sentence: '<span class="highlight">す</span>しが食べたい。', answer: '寿司', sentenceCN: '想吃寿司。' },
+            { hiragana: 'た', romaji: 'ta', sentence: '朝ごはんを<span class="highlight">た</span>べる。', answer: '吃', sentenceCN: '吃早餐。' },
+            { hiragana: 'ち', romaji: 'chi', sentence: '<span class="highlight">ち</span>いさい犬が好き。', answer: '小', sentenceCN: '喜欢小狗。' },
+            { hiragana: 'つ', romaji: 'tsu', sentence: '<span class="highlight">つ</span>くに本がある。', answer: '桌子', sentenceCN: '桌上有书。' },
+            { hiragana: 'て', romaji: 'te', sentence: '<span class="highlight">て</span>がみが届きました。', answer: '信', sentenceCN: '信到了。' },
+            { hiragana: 'と', romaji: 'to', sentence: '<span class="highlight">と</span>けいが止まった。', answer: '钟', sentenceCN: '钟停了。' },
+            { hiragana: 'な', romaji: 'na', sentence: '<span class="highlight">な</span>つは暑い。', answer: '夏天', sentenceCN: '夏天很热。' },
+            { hiragana: 'に', romaji: 'ni', sentence: '<span class="highlight">に</span>ほんに行った。', answer: '日本', sentenceCN: '去了日本。' },
+            { hiragana: 'は', romaji: 'ha', sentence: '<span class="highlight">は</span>なが美しい。', answer: '花', sentenceCN: '花很美。' },
+            { hiragana: 'ひ', romaji: 'hi', sentence: '<span class="highlight">ひ</span>とりが多い。', answer: '人', sentenceCN: '人很多。' },
+            { hiragana: 'ふ', romaji: 'fu', sentence: '<span class="highlight">ふ</span>ゆは寒い。', answer: '冬天', sentenceCN: '冬天很冷。' },
+            { hiragana: 'へ', romaji: 'he', sentence: '<span class="highlight">へ</span>やに入ってください。', answer: '房间', sentenceCN: '请进房间。' },
+            { hiragana: 'ほ', romaji: 'ho', sentence: '<span class="highlight">ほ</span>んを読みます。', answer: '书', sentenceCN: '读书。' },
+            { hiragana: 'ま', romaji: 'ma', sentence: '<span class="highlight">ま</span>どを開けて。', answer: '窗户', sentenceCN: '打开窗户。' },
+            { hiragana: 'み', romaji: 'mi', sentence: '<span class="highlight">み</span>みが痛い。', answer: '耳朵', sentenceCN: '耳朵疼。' },
+            { hiragana: 'む', romaji: 'mu', sentence: '<span class="highlight">む</span>らは静かです。', answer: '村庄', sentenceCN: '村庄很安静。' },
+            { hiragana: 'め', romaji: 'me', sentence: '<span class="highlight">め</span>が綺麗。', answer: '眼睛', sentenceCN: '眼睛很美。' },
+            { hiragana: 'も', romaji: 'mo', sentence: '英語<span class="highlight">も</span>できます。', answer: '也', sentenceCN: '也会英语。' },
+            { hiragana: 'や', romaji: 'ya', sentence: '<span class="highlight">や</span>まに登る。', answer: '山', sentenceCN: '登山。' },
+            { hiragana: 'ゆ', romaji: 'yu', sentence: '<span class="highlight">ゆ</span>きが降る。', answer: '雪', sentenceCN: '下雪。' },
+            { hiragana: 'よ', romaji: 'yo', sentence: '<span class="highlight">よ</span>るは静かです。', answer: '夜晚', sentenceCN: '夜晚很安静。' },
+            { hiragana: 'ら', romaji: 'ra', sentence: '<span class="highlight">ら</span>いに卒業する。', answer: '明年', sentenceCN: '明年毕业。' },
+            { hiragana: 'り', romaji: 'ri', sentence: '<span class="highlight">り</span>んごを食べる。', answer: '苹果', sentenceCN: '吃苹果。' },
+            { hiragana: 'る', romaji: 'ru', sentence: '映画を<span class="highlight">る</span>。', answer: '看', sentenceCN: '看电影。' },
+            { hiragana: 'わ', romaji: 'wa', sentence: '<span class="highlight">わ</span>たしは学生です。', answer: '我', sentenceCN: '我是学生。' },
+            { hiragana: 'を', romaji: 'wo', sentence: '本を<span class="highlight">を</span>読む。', answer: '宾语助词', sentenceCN: '读书。' },
+            { hiragana: 'ん', romaji: 'n', sentence: ' 猫が<span class="highlight">ん</span>。', answer: '在', sentenceCN: '猫在。' }
+        ];
+
+        let questions = [];
+        let currentIndex = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let currentMode = '';
+        let currentCorrectAnswer = '';
+        let currentQuestion = null;
+        let autoMode = 0;
+        let autoTimer = null;
+        let answered = false;
+        let questionPool = [];
+
+        function shuffle(arr) {
+            const newArr = [...arr];
+            for (let i = newArr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        }
+
+        function getProgress(mode) {
+            const data = localStorage.getItem(`japanese_progress_${mode}`);
+            return data ? JSON.parse(data) : {};
+        }
+
+        function saveProgress(mode, index, correct) {
+            const progress = getProgress(mode);
+            if (!progress[index]) {
+                progress[index] = { correct: 0, wrong: 0 };
+            }
+            if (correct) {
+                progress[index].correct++;
+            } else {
+                progress[index].wrong++;
+            }
+            localStorage.setItem(`japanese_progress_${mode}`, JSON.stringify(progress));
+        }
+
+        function generateQuestions(mode) {
+            let pool = [];
+            if (mode === 'kanji') pool = [...kanjiData];
+            else if (mode === 'kata-attach') pool = [...kataAttachData];
+            else if (mode === 'kata-deepseek') pool = [...kataHiraganaData];
+            else if (mode === 'kata-content') pool = [...kataContentDataBuiltIn];
+            else if (mode === 'hiragana') pool = [...hiraganaDataBuiltIn];
+
+            const progress = getProgress(mode);
+
+            const unAnswered = [];
+            const wrongAnswered = [];
+            const correctAnswered = [];
+
+            pool.forEach((item, idx) => {
+                const itemProgress = progress[idx];
+                if (!itemProgress || (itemProgress.correct === 0 && itemProgress.wrong === 0)) {
+                    unAnswered.push({ item, idx });
+                } else if (itemProgress.wrong > 0) {
+                    wrongAnswered.push({ item, idx });
+                } else {
+                    correctAnswered.push({ item, idx });
+                }
+            });
+
+            const selected = [];
+            const allItems = [...unAnswered, ...shuffle(wrongAnswered), ...shuffle(correctAnswered)];
+            
+            for (let i = 0; i < 20 && i < allItems.length; i++) {
+                selected.push(allItems[i]);
+            }
+
+            while (selected.length < 20) {
+                const randomItem = pool[Math.floor(Math.random() * pool.length)];
+                const idx = pool.indexOf(randomItem);
+                if (!selected.find(s => s.idx === idx)) {
+                    selected.push({ item: randomItem, idx });
+                }
+            }
+
+            questionPool = selected;
+            return selected.map(s => s.item);
+        }
+
+        function setAutoMode(mode) {
+            autoMode = mode;
+            document.querySelectorAll('.auto-mode button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-auto-' + mode).classList.add('active');
+            if (mode > 0 && answered) {
+                startAutoTimer();
+            }
+        }
+
+        function startAutoTimer() {
+            if (autoTimer) clearTimeout(autoTimer);
+            if (autoMode > 0) {
+                autoTimer = setTimeout(() => {
+                    if (answered && currentIndex < 20) {
+                        nextQuestion();
+                    }
+                }, autoMode * 1000);
+            }
+}
+        
+        function initPage() {
+            document.getElementById('count-kanji').textContent = '共' + kanjiData.length + '词';
+            document.getElementById('count-kata-attach').textContent = '共' + kataAttachData.length + '词';
+            document.getElementById('count-kata-deepseek').textContent = '共' + kataHiraganaData.length + '词';
+        }
+
+        function startQuiz(mode) {
+            if (autoTimer) clearTimeout(autoTimer);
+            currentMode = mode;
+            questions = generateQuestions(mode);
+            currentIndex = 0;
+            correctCount = 0;
+            wrongCount = 0;
+            answered = false;
+            autoMode = 0;
+            document.querySelectorAll('.auto-mode button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-auto-0').classList.add('active');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('quizScreen').classList.remove('hidden');
+            updateScoreDisplay();
+            showQuestion();
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('correctCount').textContent = correctCount;
+            document.getElementById('wrongCount').textContent = wrongCount;
+        }
+
+        function showQuestion() {
+            const q = questions[currentIndex];
+            currentQuestion = q;
+            currentQuestion.poolIndex = questionPool[currentIndex].idx;
+            answered = false;
+            document.getElementById('currentNum').textContent = currentIndex + 1;
+            document.getElementById('resultInfo').classList.add('hidden');
+            document.getElementById('btnNext').style.display = 'block';
+
+            let content = '';
+
+            if (currentMode === 'kanji') {
+                document.getElementById('questionText').textContent = '这个日语汉字的正确含义是？';
+                content = `<div class="word">${q.kanji}</div>`;
+                currentCorrectAnswer = q.meaningJP;
+                renderOptions(getKanjiOptions(q, questions), q);
+            } else if (currentMode === 'kata-attach') {
+                document.getElementById('questionText').textContent = '这个假名的功能是？';
+                content = `<div class="word" style="font-size:36px;">${q.katakana}</div><div class="sentence" style="font-size:18px;margin-top:10px;">${q.exampleJP}</div>`;
+                currentCorrectAnswer = q.meaning;
+                renderOptions(getKataAttachOptions(q, questions), q);
+            } else if (currentMode === 'kata-deepseek') {
+                document.getElementById('questionText').textContent = '这个假名的功能是？';
+                content = `<div class="word" style="font-size:36px;">${q.katakana}</div><div class="sentence" style="font-size:18px;margin-top:10px;">${q.exampleJP}</div>`;
+                currentCorrectAnswer = q.meaning;
+                renderOptions(getKataAttachOptions(q, questions), q);
+            } else if (currentMode === 'kata-content' || currentMode === 'hiragana') {
+                document.getElementById('questionText').textContent = '这个假名在句子中的含义是？';
+                content = `<div class="sentence">${q.sentence}</div>`;
+                currentCorrectAnswer = q.answer;
+                renderOptions(getSentenceOptions(q, questions), q);
+            }
+            document.getElementById('questionContent').innerHTML = content;
+        }
+
+        function getKanjiOptions(current, allQuestions) {
+            const options = [current.meaningJP, current.meaningCN];
+            const otherMeanings = allQuestions
+                .filter(q => q.kanji !== current.kanji)
+                .map(q => q.meaningJP);
+            while (options.length < 4) {
+                const opt = otherMeanings[Math.floor(Math.random() * otherMeanings.length)];
+                if (opt && !options.includes(opt)) options.push(opt);
+            }
+            return shuffle(options);
+        }
+
+        function getKataAttachOptions(current, allQuestions) {
+            const options = [current.meaning];
+            const otherMeanings = allQuestions
+                .filter(q => q.katakana !== current.katakana)
+                .map(q => q.meaning);
+            while (options.length < 4) {
+                const opt = otherMeanings[Math.floor(Math.random() * otherMeanings.length)];
+                if (opt && !options.includes(opt)) options.push(opt);
+            }
+            return shuffle(options);
+        }
+
+        function getKataDeepseekOptions(current, allQuestions) {
+            const options = [current.meaning];
+            const otherMeanings = allQuestions
+                .filter(q => q.katakana !== current.katakana)
+                .map(q => q.meaning);
+            while (options.length < 4) {
+                const opt = otherMeanings[Math.floor(Math.random() * otherMeanings.length)];
+                if (opt && !options.includes(opt)) options.push(opt);
+            }
+            return shuffle(options);
+        }
+
+        function getSentenceOptions(current, allQuestions) {
+            const options = [current.answer];
+            const otherAnswers = allQuestions
+                .filter(q => q !== current && q.answer !== current.answer)
+                .map(q => q.answer);
+            while (options.length < 4) {
+                const opt = otherAnswers[Math.floor(Math.random() * otherAnswers.length)];
+                if (opt && !options.includes(opt)) options.push(opt);
+            }
+            return shuffle(options);
+        }
+
+        function renderOptions(options, q) {
+            const optionsEl = document.getElementById('options');
+            optionsEl.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'option';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(opt, q);
+                optionsEl.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, q) {
+            if (answered) return;
+            answered = true;
+            if (autoTimer) clearTimeout(autoTimer);
+
+            const buttons = document.querySelectorAll('.option');
+            buttons.forEach(btn => {
+                btn.classList.add('disabled');
+                if (btn.textContent === currentCorrectAnswer) {
+                    btn.classList.add('correct');
+                } else if (btn.textContent === selected && selected !== currentCorrectAnswer) {
+                    btn.classList.add('wrong');
+                }
+            });
+
+            const isCorrect = selected === currentCorrectAnswer;
+            if (isCorrect) {
+                correctCount++;
+            } else {
+                wrongCount++;
+            }
+
+            if (currentMode === 'kanji' || currentMode === 'kata-attach' || currentMode === 'kata-deepseek') {
+                saveProgress(currentMode, currentQuestion.poolIndex, isCorrect);
+            }
+
+            updateScoreDisplay();
+
+            const resultInfo = document.getElementById('resultInfo');
+            resultInfo.classList.remove('hidden');
+
+            let resultText = '';
+            if (currentMode === 'kanji') {
+                resultText = `<strong>${q.kanji}</strong> = ${q.meaningJP}<br>中文原意：${q.meaningCN}`;
+            } else if (currentMode === 'kata-attach') {
+                resultText = `<strong>${q.katakana}</strong> = ${q.meaning}<br>例句：${q.exampleJP}<br>中文释义：${q.exampleCN}`;
+            } else if (currentMode === 'kata-deepseek') {
+                resultText = `<strong>${q.katakana}</strong> = ${q.meaning}<br>例句：${q.exampleJP}<br>中文释义：${q.exampleCN}`;
+            } else if (currentMode === 'kata-content' || currentMode === 'hiragana') {
+                resultText = `<strong>${q.hiragana}</strong> = ${q.answer}（读音：${q.romaji}）<br>句意：${q.sentenceCN}`;
+            }
+            document.getElementById('resultValue').innerHTML = resultText;
+
+            if (autoMode > 0) {
+                document.getElementById('btnNext').style.display = 'none';
+                startAutoTimer();
+            }
+        }
+
+        function nextQuestion() {
+            if (autoTimer) clearTimeout(autoTimer);
+            currentIndex++;
+            if (currentIndex < 20) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            document.getElementById('finalScore').textContent = correctCount;
+            document.getElementById('finalCorrect').textContent = correctCount;
+            document.getElementById('finalWrong').textContent = wrongCount;
+
+            let message = '';
+            if (correctCount >= 18) message = '太棒了！完美！';
+            else if (correctCount >= 14) message = '做得很好！';
+            else if (correctCount >= 10) message = '还不错！';
+            else message = '继续加油！';
+            document.getElementById('resultMessage').textContent = message;
+        }
+
+        function goHome() {
+            if (autoTimer) clearTimeout(autoTimer);
+            document.getElementById('quizScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        function resetProgress() {
+            if (confirm('确定要重置所有学习进度吗？')) {
+                localStorage.removeItem('japanese_progress_kanji');
+                localStorage.removeItem('japanese_progress_kata-attach');
+                alert('学习进度已重置');
+            }
+        }
+
+        initPage();
+    </script>
+</body>
+</html>

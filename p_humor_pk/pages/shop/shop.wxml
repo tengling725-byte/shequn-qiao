@@ -1,0 +1,28 @@
+<view class="container">
+  <view class="header">
+    <text class="title">幽默商城</text>
+    <text class="subtitle">提升你的幽默段位</text>
+  </view>
+
+  <view class="goods-list">
+    <view class="goods-item" wx:for="{{goods}}" wx:key="id">
+      <view class="goods-img">
+        <text class="goods-icon">{{item.icon}}</text>
+      </view>
+      <view class="goods-info">
+        <text class="goods-name">{{item.name}}</text>
+        <text class="goods-desc">{{item.desc}}</text>
+        <view class="goods-bottom">
+          <text class="goods-price">¥{{item.price}}</text>
+          <view class="buy-btn" bindtap="buyGoods" data-id="{{item.id}}">
+            <text>购买</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="back-btn" bindtap="goBack">
+    <text>返回首页</text>
+  </view>
+</view>

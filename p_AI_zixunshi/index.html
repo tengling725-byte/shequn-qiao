@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI咨询师 - 个性化测评</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 700px; margin: 0 auto; }
+        h1 { text-align: center; color: #fff; font-size: 2em; margin-bottom: 10px; }
+        .card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .step-title { font-size: 1.3em; color: #333; margin-bottom: 15px; font-weight: bold; }
+        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+        textarea:focus, input:focus { outline: none; border-color: #667eea; }
+        textarea { min-height: 100px; resize: vertical; }
+        .char-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .char-input input {
+            width: calc(20% - 8px);
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            text-align: center;
+        }
+        .char-input input:focus { border-color: #667eea; }
+        .voice-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .voice-btn.recording { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .btn:hover { transform: scale(1.02); }
+        .btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        
+        /* 加载中 */
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .loading-spinner {
+            width: 50px; height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* 答题页面 */
+        .progress-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.3s; }
+        .question-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .question-num { color: #667eea; font-size: 0.9em; margin-bottom: 10px; }
+        .question-text { font-size: 1.2em; color: #333; margin-bottom: 20px; line-height: 1.6; }
+        .option {
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1em;
+            line-height: 1.5;
+        }
+        .option:hover { border-color: #667eea; background: #f0f3ff; }
+        .option.selected { border-color: #667eea; background: #e8edff; }
+        .nav-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .nav-btns button { flex: 1; padding: 12px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        .nav-btns button:hover { background: #5a6268; }
+        
+        /* 结果页面 */
+        .result-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .result-q { font-weight: bold; color: #333; margin-bottom: 8px; }
+        .result-a { color: #667eea; margin-bottom: 5px; }
+        .result解析 { color: #888; font-size: 0.9em; }
+        .ai-解析-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+        }
+        .ai-result {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            color: #333;
+        }
+        .restart-btn {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI咨询师</h1>
+        
+        <!-- 步骤1: 输入困惑和特点 -->
+        <div class="card" id="step1">
+            <div class="step-title">请描述你的困惑和特点</div>
+            
+            <label>你的困惑（必填）：</label>
+            <textarea id="confusion" placeholder="例如：是否适合读博？要不要转行？..."></textarea>
+            
+            <label>你的5个特点（必填，每行一个）：</label>
+            <textarea id="features" placeholder="例如：
+喜欢学习量子力学但对其工程化不太感兴趣
+提前修完四大力学且满绩点
+不喜欢编程
+喜欢统计物理
+不善于表达"></textarea>
+            
+            <button class="btn" onclick="generateQuestions()">生成测试题</button>
+        </div>
+        
+        <!-- 加载中 -->
+        <div class="card" id="loading" style="display:none;">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div>AI正在生成个性化测试题...</div>
+            </div>
+        </div>
+        
+        <!-- 步骤2: 答题页面 -->
+        <div class="card" id="step2" style="display:none;">
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="question-card" id="questionCard"></div>
+            <div class="nav-btns">
+                <button onclick="prevQ()">上一题</button>
+                <button onclick="nextQ()">下一题</button>
+            </div>
+            <button class="btn" onclick="showResults()">查看结果</button>
+        </div>
+        
+        <!-- 步骤3: 结果页面 -->
+        <div class="card" id="step3" style="display:none;">
+            <div class="step-title">测试结果</div>
+            <div id="resultsList"></div>
+            <button class="ai-解析-btn" onclick="getAIAnalysis()">全卷AI解析</button>
+            <div id="aiResult" class="ai-result" style="display:none;"></div>
+            <button class="restart-btn" onclick="restart()">重新测评</button>
+        </div>
+    </div>
+
+    <script>
+        // API配置（复用成语天空的配置）
+        const API_KEY = 'fbe2e6b0-582c-42c8-80a7-b1cbd403500a';
+        const API_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+        
+        let questions = [];
+        let currentIdx = 0;
+        let answers = {};
+        let userConfusion = '';
+        let userFeatures = '';
+        
+        // 语音识别
+        let recognition = null;
+        let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            try {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'zh-CN';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.onresult = function(event) {
+                    const result = event.results[0][0].transcript;
+                    document.getElementById('confusion').value = result;
+                };
+                recognition.onerror = function(e) {
+                    alert('语音识别失败: ' + e.error);
+                };
+            } catch(e) {
+                recognition = null;
+            }
+        }
+        
+        function toggleVoice() {
+            if (!recognition) return;
+            if (recognition.recording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+        
+        async function generateQuestions() {
+            const confusion = document.getElementById('confusion').value.trim();
+            const features = document.getElementById('features').value.trim();
+            
+            if (!confusion) { alert('请输入你的困惑'); return; }
+            if (!features) { alert('请输入你的5个特点'); return; }
+            
+            userConfusion = confusion;
+            userFeatures = features;
+            
+            document.getElementById('step1').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            
+            // 构建prompt
+            const prompt = `你是一个专业的生涯咨询师。请根据用户的困惑和特点，生成10道个性化测评选择题。
+
+用户困惑：${confusion}
+用户特点：
+${features}
+
+要求：
+1. 生成10道选择题，每道题有题干和4个选项（A/B/C/D）
+2. 每个选项都要有解析
+3. 题目要能深入探究用户的兴趣、价值观、能力边界和潜在发展方向
+4. 选项要覆盖从"高度可塑"到"高度固执"的梯度
+5. 解析要体现不同选项对应的画像或倾向
+
+请以JSON数组格式输出，格式如下：
+[
+  {
+    "题号": 1,
+    "题干": "问题内容",
+    "A": "选项A内容",
+    "A解析": "选择A的解析",
+    "B": "选项B内容", 
+    "B解析": "选择B的解析",
+    "C": "选项C内容",
+    "C解析": "选择C的解析",
+    "D": "选项D内容",
+    "D解析": "选择D的解析"
+  },
+  ...
+]`;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + API_KEY
+                    },
+                    body: JSON.stringify({
+                        model: 'doubao-seed-1-6-flash-250828',
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.7
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('[DEBUG] API response:', data);
+                
+                if (data.error) {
+                    throw new Error(data.error.message || 'API返回错误');
+                }
+                
+                const content = data.choices[0].message.content;
+                
+                // 解析JSON - 尝试多种格式
+                let jsonMatch = content.match(/\[[\s\S]*\]/);
+                if (!jsonMatch) {
+                    jsonMatch = content.match(/\{[\s\S]*\}/);
+                }
+                if (!jsonMatch) {
+                    console.log('[DEBUG] Raw content:', content);
+                    throw new Error('无法解析AI返回的内容');
+                }
+                
+                let parsedQuestions = JSON.parse(jsonMatch[0]);
+                if (!Array.isArray(parsedQuestions)) {
+                    parsedQuestions = [parsedQuestions];
+}
+                questions = parsedQuestions;
+                
+                if (!Array.isArray(questions) || questions.length < 10) {
+                    throw new Error('生成的题目数量不足');
+                }
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('step2').style.display = 'block';
+                showQuestion();
+                
+            } catch (e) {
+                alert('生成失败: ' + e.message);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('step1').style.display = 'block';
+            }
+        }
+        
+        function showQuestion() {
+            const q = questions[currentIdx];
+            const total = questions.length;
+            const percent = ((currentIdx + 1) / total * 100);
+            document.getElementById('progress').style.width = percent + '%';
+            
+            let savedAnswer = answers[currentIdx] || '';
+            
+            let html = `<div class="question-num">第 ${currentIdx + 1} / ${total} 题</div>`;
+            html += `<div class="question-text">${q.题干}</div>`;
+            
+            const opts = ['A', 'B', 'C', 'D'];
+            opts.forEach(opt => {
+                const isSelected = savedAnswer === opt ? ' selected' : '';
+                html += `<div class="option${isSelected}" onclick="selectOption('${opt}')">${opt}) ${q[opt]}</div>`;
+            });
+            
+            document.getElementById('questionCard').innerHTML = html;
+        }
+        
+        function selectOption(opt) {
+            answers[currentIdx] = opt;
+            
+            // 更新UI
+            document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
+            document.querySelector(`.option[onclick*="'${opt}'"]`).classList.add('selected');
+            
+            // 自动下一题
+            if (currentIdx < questions.length - 1) {
+                setTimeout(() => {
+                    currentIdx++;
+                    showQuestion();
+                }, 300);
+            }
+        }
+        
+        function prevQ() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                showQuestion();
+            }
+        }
+        
+        function nextQ() {
+            if (currentIdx < questions.length - 1) {
+                currentIdx++;
+                showQuestion();
+            }
+        }
+        
+        function showResults() {
+            // 检查是否完成所有题目
+            if (Object.keys(answers).length < questions.length) {
+                if (!confirm('你还有' + (questions.length - Object.keys(answers).length) + '题未完成，确定要查看结果吗？')) {
+                    return;
+                }
+            }
+            
+            document.getElementById('step2').style.display = 'none';
+            document.getElementById('step3').style.display = 'block';
+            
+            let html = '';
+            questions.forEach((q, idx) => {
+                const ans = answers[idx] || '未作答';
+                const optKey = ans === '未作答' ? 'A' : ans;
+                html += `
+                    <div class="result-card">
+                        <div class="result-q">${idx + 1}. ${q.题干}</div>
+                        <div class="result-a">你的答案：${ans}</div>
+                        <div class="result解析">解析：${q[optKey + '解析'] || ''}</div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('resultsList').innerHTML = html;
+            document.getElementById('aiResult').style.display = 'none';
+        }
+        
+        async function getAIAnalysis() {
+            const btn = document.querySelector('.ai-解析-btn');
+            btn.textContent = 'AI分析中...';
+            btn.disabled = true;
+            
+            // 整理答题结果
+            let answersText = '';
+            questions.forEach((q, idx) => {
+                const ans = answers[idx] || '未作答';
+                answersText += `${idx + 1}. ${q.题干}\n答案：${ans}\n\n`;
+            });
+            
+            const prompt = `你是一个专业的生涯咨询师。请根据以下用户的答题结果，进行综合分析。
+
+用户困惑：${userConfusion}
+用户特点：
+${userFeatures}
+
+答题结果：
+${answersText}
+
+请从以下几个方面进行综合分析：
+1. 用户的核心画像是什么样的？
+2. 用户的优势和发展潜力
+3. 用户可能面临的挑战和风险
+4. 给用户的具体建议
+
+请用温暖、专业且有建设性的语言进行分析。`;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + API_KEY
+                    },
+                    body: JSON.stringify({
+                        model: 'doubao-seed-1-6-flash-250828',
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.7
+                    })
+                });
+                
+                const data = await response.json();
+                const analysis = data.choices[0].message.content;
+                
+                document.getElementById('aiResult').textContent = analysis;
+                document.getElementById('aiResult').style.display = 'block';
+                
+            } catch (e) {
+                alert('AI分析失败: ' + e.message);
+            }
+            
+            btn.textContent = '全卷AI解析';
+            btn.disabled = false;
+        }
+        
+        function restart() {
+            questions = [];
+            currentIdx = 0;
+            answers = {};
+            userConfusion = '';
+            userFeatures = '';
+            
+            document.getElementById('step3').style.display = 'none';
+            document.getElementById('step1').style.display = 'block';
+            document.getElementById('confusion').value = '';
+            document.getElementById('features').value = '';
+        }
+    </script>
+</body>
+</html>

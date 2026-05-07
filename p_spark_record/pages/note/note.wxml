@@ -1,0 +1,109 @@
+<view class="container">
+  <view class="header">
+    <view class="header-left" bindtap="goBack">
+      <text class="back-icon">←</text>
+    </view>
+    <text class="page-title">{{isEdit ? '编辑小条' : '新建小条'}}</text>
+  </view>
+
+  <view class="form-section">
+    <view class="input-group">
+      <input class="title-input" placeholder="标题（可选）" value="{{title}}" bindinput="onTitleChange" />
+    </view>
+
+    <view class="input-group">
+      <textarea class="content-textarea" placeholder="记录你的想法..." value="{{content}}" bindinput="onContentChange" auto-height />
+    </view>
+
+    <view class="media-section">
+      <view class="media-grid" wx:if="{{images.length > 0}}">
+        <view class="media-item" wx:for="{{images}}" wx:key="index">
+          <image class="media-img" src="{{item}}" mode="aspectFill" bindtap="previewImage" data-index="{{index}}" />
+          <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+        </view>
+      </view>
+
+      <view class="media-grid" wx:if="{{videos.length > 0}}">
+        <view class="media-item" wx:for="{{videos}}" wx:key="index">
+          <video class="media-video" src="{{item}}" />
+          <view class="delete-btn" bindtap="deleteVideo" data-index="{{index}}">×</view>
+        </view>
+      </view>
+
+      <view class="audio-item" wx:if="{{audioPath}}">
+        <text class="audio-text">{{audioText || '语音录制完成'}}</text>
+        <view class="delete-btn" bindtap="deleteAudio">删除语音</view>
+      </view>
+    </view>
+
+    <view class="category-section">
+      <picker range="{{categories}}" bindchange="onCategoryChange">
+        <view class="picker-trigger">
+          <text class="label">分类：</text>
+          <text class="value">{{category}}</text>
+        </view>
+      </picker>
+    </view>
+  </view>
+
+  <view class="action-buttons">
+    <button class="btn-ai" bindtap="toggleAIPanel">
+      <text>✨ AI润色</text>
+    </button>
+    <button class="btn-media" bindtap="chooseImage">📷 图片</button>
+    <button class="btn-media" bindtap="chooseVideo">🎬 视频</button>
+    <button class="btn-media {{isRecording ? 'recording' : ''}}" bindtap="onRecordToggle">
+      {{isRecording ? '⏹ 停止' : '🎤 语音'}}
+    </button>
+    <button class="btn-export" bindtap="toggleExportPanel">
+      <text>📤 导出</text>
+    </button>
+  </view>
+
+  <view class="mask-layer {{showAIPanel ? 'show' : ''}}" bindtap="toggleAIPanel" wx:if="{{showAIPanel}}"></view>
+
+  <view class="ai-panel {{showAIPanel ? 'show' : ''}}" wx:if="{{showAIPanel}}">
+    <view class="ai-header">
+      <text class="ai-title">选择润色风格</text>
+      <text class="ai-close" bindtap="toggleAIPanel">×</text>
+    </view>
+    <view class="ai-styles">
+      <view class="ai-style-item {{aiStyle === item.id ? 'active' : ''}}" wx:for="{{aiStyles}}" wx:key="id" bindtap="selectAiStyle" data-style="{{item.id}}">
+        <text>{{item.name}}</text>
+      </view>
+    </view>
+    <button class="btn-polish" bindtap="polishContent" disabled="{{isPolishing}}">
+      {{isPolishing ? '润色中...' : '一键润色'}}
+    </button>
+  </view>
+
+  <view class="export-panel {{showExportPanel ? 'show' : ''}}" wx:if="{{showExportPanel}}">
+    <view class="export-mask" bindtap="closeExportPanel"></view>
+    <view class="export-content">
+      <view class="export-header">
+        <text>选择导出方式</text>
+      </view>
+      <view class="export-options">
+        <view class="export-option" bindtap="exportAsImage">
+          <text class="option-icon">📷</text>
+          <text class="option-text">生成高清长图</text>
+        </view>
+        <view class="export-option" bindtap="exportAsHtml">
+          <text class="option-icon">🌐</text>
+          <text class="option-text">导出HTML</text>
+        </view>
+        <view class="export-option" bindtap="exportAsText">
+          <text class="option-icon">📝</text>
+          <text class="option-text">导出纯文本</text>
+        </view>
+      </view>
+      <view class="export-cancel" bindtap="closeExportPanel">取消</view>
+    </view>
+  </view>
+
+  <view class="save-section">
+    <button class="btn-save" bindtap="saveNote">保存小条</button>
+  </view>
+
+  <canvas canvas-id="noteCanvas" style="width: {{canvasWidth}}px; height: {{canvasHeight}}px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+</view>

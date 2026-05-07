@@ -1,0 +1,17 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/game/game",
+    "pages/result/result",
+    "pages/shop/shop",
+    "pages/report/report",
+    "pages/quotes/quotes",
+    "pages/wenyan/wenyan"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#ff6b6b",
+    "navigationBarTitleText": "梗王争霸",
+    "navigationBarTextStyle": "white"
+  },
+  "sitemapLocation": "sitemap.json"
+}

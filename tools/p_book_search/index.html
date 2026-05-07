@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书单搜索工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .input-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #4a90d9;
+        }
+        .tips {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .btn-search {
+            background: #4a90d9;
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-search:hover {
+            background: #3a7bc8;
+        }
+        .options {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .options label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            color: #666;
+        }
+        .options input[type="checkbox"] {
+            margin-right: 8px;
+            width: 18px;
+            height: 18px;
+        }
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .book-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .book-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .sites {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .site-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .site-btn:hover {
+            border-color: #4a90d9;
+            color: #4a90d9;
+        }
+        .site-btn.electronic {
+            background: #f0f7ff;
+            border-color: #cce4ff;
+        }
+        .site-btn.physical {
+            background: #fff5e6;
+            border-color: #ffd9b3;
+        }
+        .site-btn.library {
+            background: #e6f7e6;
+            border-color: #b3e6b3;
+        }
+        .site-btn .icon {
+            font-size: 16px;
+        }
+        .site-btn .open-link {
+            margin-left: 4px;
+            color: #999;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .site-btn .open-link:hover {
+            color: #4a90d9;
+        }
+        .empty {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>书单搜索工具</h1>
+        
+        <div class="input-section">
+            <textarea id="bookInput" placeholder="请输入书单，支持空格、逗号、分号、换行分隔"></textarea>
+            <div class="tips">支持分隔符：空格、逗号、分号、换行</div>
+            <button class="btn-search" onclick="parseAndSearch()">搜索</button>
+            <div class="options">
+                <label>
+                    <input type="checkbox" id="openInNewTab" checked>
+                    在新标签页打开链接
+                </label>
+            </div>
+        </div>
+        
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        const SITES = [
+            { name: "豆瓣", url: "https://www.douban.com/search?source=suggest&q={query}", type: "info" },
+            { name: "京东", url: "https://search.jd.com/Search?keyword={query}&enc=utf-8", type: "physical" },
+            { name: "当当", url: "https://search.dangdang.com/?key={query}&act=input", type: "physical" },
+            { name: "闲鱼", url: "https://www.goofish.com/search?q={query}", type: "physical" },
+            { name: "得到", url: "https://www.dedao.cn/search/result?q={query}", type: "electronic" },
+            { name: "微信读书", url: "https://weread.qq.com/web/search/books?keyword={query}", type: "electronic" },
+            { name: "豆瓣阅读", url: "https://read.douban.com/search?q={query}", type: "electronic" },
+            { name: "图书馆", url: "http://book.ucdrs.superlib.net/search?Field=all&channel=search&sw={query}", type: "library" },
+        ];
+
+        function parseBookList(input) {
+            const books = [];
+            let remaining = input;
+            while (remaining.length > 0) {
+                const bookMatch = remaining.match(/《([^》]+)》/);
+                if (bookMatch) {
+                    books.push(bookMatch[1].trim());
+                    remaining = remaining.substring(bookMatch[0].length);
+                } else {
+                    break;
+                }
+            }
+            if (books.length > 0 && remaining.trim()) {
+                const separators = /[,，;；、\n]+/;
+                const others = remaining.trim().split(separators).filter(b => b.trim());
+                return [...books, ...others];
+            }
+            if (books.length === 0) {
+                const separators = /[,，;；、\n]+/;
+                return input.trim().split(separators).filter(b => b.trim());
+            }
+            return books;
+        }
+
+        function encodeQuery(query) {
+            return encodeURIComponent(query);
+        }
+
+        function openLink(url, event) {
+            const openInNewTab = document.getElementById('openInNewTab').checked;
+            if (openInNewTab) {
+                window.open(url, '_blank');
+            } else {
+                window.open(url, '_self');
+            }
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        function parseAndSearch() {
+            const input = document.getElementById('bookInput').value;
+            const books = parseBookList(input);
+            const resultsDiv = document.getElementById('results');
+            
+            if (books.length === 0) {
+                resultsDiv.innerHTML = '<div class="empty">请输入有效的书名</div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = books.map((book, index) => {
+                const sitesHtml = SITES.map(site => {
+                    const url = site.url.replace('{query}', encodeQuery(book));
+                    return `
+                        <a href="${url}" class="site-btn ${site.type}" target="_blank" onclick="openLink('${url}', event)">
+                            <span>${site.name}</span>
+                            <span class="open-link">↗</span>
+                        </a>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="book-card">
+                        <div class="book-title">${book}</div>
+                        <div class="sites">${sitesHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('bookInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                parseAndSearch();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+const kataHiraganaData = [
+  { katakana: "が", meaning: "标记主语", exampleJP: "雨が降る。", exampleCN: "“雨”是主语 → 雨下了" },
+  { katakana: "を", meaning: "标记宾语", exampleJP: "水を飲む。", exampleCN: "“水”是宾语 → 喝水" },
+  { katakana: "に", meaning: "标记方向/对象/时间", exampleJP: "学校に行く。", exampleCN: "“学校”是方向 → 去学校" },
+  { katakana: "へ", meaning: "标记方向", exampleJP: "東京へ行く。", exampleCN: "“东京”是方向 → 往东京去" },
+  { katakana: "で", meaning: "标记场所/手段", exampleJP: "公園で遊ぶ。", exampleCN: "“公园”是场所 → 在公园玩" },
+  { katakana: "から", meaning: "标记起点", exampleJP: "家から出る。", exampleCN: "“家”是起点 → 从家出去" },
+  { katakana: "まで", meaning: "标记终点", exampleJP: "駅まで走る。", exampleCN: "“车站”是终点 → 跑到车站" },
+  { katakana: "と", meaning: "标记一起动作的对象", exampleJP: "友達と話す。", exampleCN: "“朋友”是同伴 → 和朋友说话" },
+  { katakana: "は", meaning: "提示主题", exampleJP: "私は行く。", exampleCN: "“我”是主题 → 关于我，我去" },
+  { katakana: "も", meaning: "表示“也”", exampleJP: "私も行く。", exampleCN: "“我”是也包含的对象 → 我也去" },
+  { katakana: "だけ", meaning: "表示“只”", exampleJP: "これだけ欲しい。", exampleCN: "“这个”是限定的对象 → 只想要这个" },
+  { katakana: "て", meaning: "连接动词", exampleJP: "起きて食べる。", exampleCN: "连接“起床”和“吃” → 起床然后吃" },
+  { katakana: "ので", meaning: "表原因", exampleJP: "寒いので窓を閉める。", exampleCN: "“冷”是原因 → 因为冷，关窗" },
+  { katakana: "から", meaning: "表原因/理由", exampleJP: "遅れたから謝る。", exampleCN: "“迟到了”是理由 → 因为迟到而道歉" },
+  { katakana: "が (接续)", meaning: "表转折", exampleJP: "安いが買わない。", exampleCN: "“便宜”是转折前 → 便宜但是不买" },
+  { katakana: "た", meaning: "过去", exampleJP: "食べた。", exampleCN: "动作已完成 → 吃了" },
+  { katakana: "ない", meaning: "否定", exampleJP: "食べない。", exampleCN: "动作未发生 → 不吃" },
+  { katakana: "られる", meaning: "被动/可能", exampleJP: "食べられる。", exampleCN: "被吃 / 能吃" },
+  { katakana: "せる/させる", meaning: "使役", exampleJP: "食べさせる。", exampleCN: "让（某人）吃" },
+  { katakana: "か", meaning: "疑问", exampleJP: "行くか？", exampleCN: "表示疑问 → 去吗？" },
+  { katakana: "ね", meaning: "确认/感叹", exampleJP: "良いね。", exampleCN: "表示确认/感叹 → 很好啊" }
+];

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>梗王争霸 - 幽默大挑战</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="page-index" class="page active">
+      <div class="container">
+        <div class="logo">
+          <h1>梗王争霸</h1>
+          <p class="subtitle">幽默大挑战</p>
+        </div>
+        
+        <div class="menu">
+          <button class="btn-primary" onclick="location.href='game.html'">开始挑战</button>
+          <button class="btn-secondary" onclick="location.href='quotes.html'">📖 名句棒棒糖</button>
+          <button class="btn-secondary" onclick="location.href='wenyan.html'">📜 文言豆腐干</button>
+          <button class="btn-secondary" onclick="location.href='shop.html'">🛒 爆笑小卖部</button>
+        </div>
+        
+        <div class="stats">
+          <p>累计得分：<span id="total-score">0</span></p>
+          <p>最高纪录：<span id="high-score">0</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="js/storage.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var totalScore = Storage.getNumber('totalScore');
+      var highScore = Storage.getNumber('highScore');
+      
+      document.getElementById('total-score').textContent = totalScore;
+      document.getElementById('high-score').textContent = highScore;
+      
+      if (!Storage.get('firstPlayDate')) {
+        Storage.set('firstPlayDate', new Date().toISOString().split('T')[0]);
+      }
+    });
+  </script>
+</body>
+</html>

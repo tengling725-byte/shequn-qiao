@@ -1,0 +1,70 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "小测"
+      }
+    },
+    {
+      "path": "pages/bank/list",
+      "style": {
+        "navigationBarTitleText": "题库管理"
+      }
+    },
+    {
+      "path": "pages/bank/detail",
+      "style": {
+        "navigationBarTitleText": "题库详情"
+      }
+    },
+    {
+      "path": "pages/bank/import",
+      "style": {
+        "navigationBarTitleText": "导入题库"
+      }
+    },
+    {
+      "path": "pages/quiz/setup",
+      "style": {
+        "navigationBarTitleText": "测验设置"
+      }
+    },
+    {
+      "path": "pages/quiz/play",
+      "style": {
+        "navigationBarTitleText": "测验"
+      }
+    },
+    {
+      "path": "pages/quiz/result",
+      "style": {
+        "navigationBarTitleText": "测验结果"
+      }
+    },
+    {
+      "path": "pages/review/history",
+      "style": {
+        "navigationBarTitleText": "历史记录"
+      }
+    },
+    {
+      "path": "pages/review/wrong",
+      "style": {
+        "navigationBarTitleText": "错题本"
+      }
+    },
+    {
+      "path": "pages/user/index",
+      "style": {
+        "navigationBarTitleText": "我的"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "小测",
+    "navigationBarBackgroundColor": "#667eea",
+    "backgroundColor": "#F8F8F8"
+  }
+}

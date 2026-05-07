@@ -1,0 +1,24 @@
+<view class="container">
+  <view class="header">
+    <view class="back-btn" bindtap="goBack">← 返回</view>
+    <text class="title">名句棒棒糖</text>
+    <view class="fav-btn" bindtap="toggleFavorite">
+      {{favorites.includes(currentIndex) ? '❤️' : '🤍'}}
+    </view>
+  </view>
+
+  <view class="content" 
+    bindtouchstart="touchStart" 
+    bindtouchend="touchEnd">
+    <view class="card">
+      <text class="quote-text">{{quotes[currentIndex].text}}</text>
+      <text class="quote-author">— {{quotes[currentIndex].author}}</text>
+    </view>
+  </view>
+
+  <view class="footer">
+    <view class="arrow" bindtap="prevQuote">◀ 上一条</view>
+    <text class="indicator">{{currentIndex + 1}}/{{quotes.length}}</text>
+    <view class="arrow" bindtap="nextQuote">下一条 ▶</view>
+  </view>
+</view>

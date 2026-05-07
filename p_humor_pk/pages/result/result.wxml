@@ -1,0 +1,108 @@
+<view class="container">
+  <view class="result-card">
+    <view class="rating {{rating}}">
+      <text class="rating-text">{{rating}}</text>
+    </view>
+    
+    <view class="score">
+      <text class="score-value">{{score}}</text>
+      <text class="score-label">本局得分</text>
+    </view>
+    
+    <view class="explos-badge" wx:if="{{explosCount > 0}}">
+      <text>🔥 爆炸 {{explosCount}}次</text>
+    </view>
+    
+    <view wx:if="{{isNewRecord}}" class="new-record">
+      <text>新纪录</text>
+    </view>
+    
+    <view class="stats">
+      <view class="stat-row">
+        <text class="stat-label">正确题数</text>
+        <text class="stat-value">{{correctCount}}/{{totalQuestions}}</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">最高连击</text>
+        <text class="stat-value">{{maxStreak}}连击</text>
+      </view>
+      <view class="stat-row">
+        <text class="stat-label">累计得分</text>
+        <text class="stat-value">{{totalScore}}</text>
+      </view>
+    </view>
+    
+    <view class="rating-desc">
+      <text wx:if="{{rating === 'S'}}">幽默大师！笑点满满</text>
+      <text wx:if="{{rating === 'A'}}">段子手！包袱抖不停</text>
+      <text wx:if="{{rating === 'B'}}">还不错！有搞笑天赋</text>
+      <text wx:if="{{rating === 'C'}}">需努力！多攒段子</text>
+      <text wx:if="{{rating === 'D'}}">笑点奇特！再接再厉</text>
+    </view>
+  </view>
+  
+  <view class="buttons">
+    <view class="btn-primary" bindtap="restartGame">
+      <text>再来一局</text>
+    </view>
+    <view class="btn-ai" bindtap="generateAiAnalysis">
+      <text>🤖 幽默体检</text>
+    </view>
+    <view class="btn-tip" bindtap="showHumorTip">
+      <text>📖 玩梗锦囊</text>
+    </view>
+    <view class="btn-shop" bindtap="goShop">
+      <text>🛒 爆笑小卖部</text>
+    </view>
+    <view class="btn-home" bindtap="goHome">
+      <text>🏠 返回首页</text>
+    </view>
+  </view>
+
+  <!-- 幽默锦囊弹窗 -->
+  <view wx:if="{{showTip}}" class="tip-modal" catchtap="true">
+    <view class="tip-content" catchtap="true">
+      <view class="tip-title">📖 玩梗锦囊</view>
+      <view class="tip-text">{{currentTip}}</view>
+      <view class="tip-arrows" wx:if="{{currentTips.length > 1}}">
+        <view class="tip-arrow left" bindtap="prevTip">◀</view>
+        <view class="tip-arrow right" bindtap="nextTip">▶</view>
+      </view>
+      <view class="tip-close" bindtap="closeTip">我知道了</view>
+    </view>
+  </view>
+
+  <!-- AI分析弹窗 -->
+  <view wx:if="{{showAiAnalysis}}" class="ai-modal" catchtap="true">
+    <view class="ai-content" catchtap="true">
+      <view class="ai-title">🤖 幽默体检</view>
+      <view wx:if="{{isLoadingAi}}" class="ai-loading">
+        <text>AI分析中...</text>
+      </view>
+      <view wx:else class="ai-text">{{aiAnalysis}}</view>
+      <view class="ai-close" bindtap="closeAiAnalysis">我知道了</view>
+    </view>
+  </view>
+
+  <!-- 复活卡弹窗 -->
+  <view wx:if="{{showRevive}}" class="revive-modal" catchtap="true">
+    <view class="revive-content" catchtap="true">
+      <view class="revive-title">⚠️ 需要复活卡</view>
+      <view class="revive-desc">当前：{{correctCount}}/10题 · {{score}}分</view>
+      <view class="revive-desc">达标：≥6题 或 ≥100分</view>
+      <view class="revive-btns">
+        <view class="revive-item" data-type="friend" bindtap="getReviveCard">
+          <text>📱 分享好友×1</text>
+        </view>
+        <view class="revive-item" data-type="moments" bindtap="getReviveCard">
+          <text>📸 分享朋友圈×1</text>
+        </view>
+        <view class="revive-item" data-type="ad" bindtap="getReviveCard">
+          <text>📺 看广告×1</text>
+        </view>
+      </view>
+      <view class="revive-cancel" bindtap="closeRevive">取消</view>
+    </view>
+  </view>
+
+  </view>

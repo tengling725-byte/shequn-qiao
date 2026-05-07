@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件缩写工具</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .container { background: white; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 40px; width: 100%; max-width: 600px; }
+        h1 { color: #333; margin-bottom: 30px; text-align: center; }
+        .upload-area { border: 2px dashed #667eea; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s; }
+        .upload-area:hover { border-color: #764ba2; background: #f8f9ff; }
+        .upload-area.dragover { border-color: #764ba2; background: #f0f3ff; }
+        input[type="file"] { display: none; }
+        .upload-icon { font-size: 48px; margin-bottom: 10px; }
+        .upload-text { color: #666; }
+        .file-info { margin-top: 20px; padding: 15px; background: #f0f3ff; border-radius: 8px; display: none; }
+        .file-info.show { display: block; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 20px; transition: transform 0.2s; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .result { margin-top: 30px; display: none; }
+        .result.show { display: block; }
+        .result h3 { color: #333; margin-bottom: 15px; }
+        .result-content { background: #f8f9ff; padding: 20px; border-radius: 8px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; }
+        .stats { margin-top: 15px; color: #666; font-size: 14px; }
+        .error { color: #e74c3c; margin-top: 15px; text-align: center; display: none; }
+        .error.show { display: block; }
+        .loading { display: none; text-align: center; margin-top: 20px; }
+        .loading.show { display: block; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 文件缩写工具</h1>
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">点击或拖拽文件到此处上传</div>
+            <input type="file" id="fileInput" accept=".txt,.md,.json,.xml,.html,.css,.js,.py,.java,.c,.cpp,.log">
+        </div>
+        <div class="file-info" id="fileInfo"></div>
+        <button class="btn" id="submitBtn" disabled>开始缩写</button>
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>处理中...</p>
+        </div>
+        <div class="error" id="error"></div>
+        <div class="result" id="result">
+            <h3>📝 缩写结果</h3>
+            <div class="result-content" id="resultContent"></div>
+            <div class="stats" id="stats"></div>
+        </div>
+    </div>
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const error = document.getElementById('error');
+        const result = document.getElementById('result');
+        const resultContent = document.getElementById('resultContent');
+        const stats = document.getElementById('stats');
+
+        let selectedFile = null;
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+        function handleFile(file) {
+            selectedFile = file;
+            fileInfo.textContent = `已选择: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            fileInfo.classList.add('show');
+            submitBtn.disabled = false;
+            error.classList.remove('show');
+            result.classList.remove('show');
+        }
+
+        submitBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            submitBtn.disabled = true;
+            loading.classList.add('show');
+            error.classList.remove('show');
+            result.classList.remove('show');
+
+            try {
+                const res = await fetch('/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.error) { error.textContent = data.error; error.classList.add('show'); }
+                else {
+                    resultContent.textContent = data.summary;
+                    stats.textContent = `原文长度: ${data.original_length} 字符 → 缩写后: ${data.summary.length} 字符`;
+                    result.classList.add('show');
+                }
+            } catch (e) { error.textContent = '请求失败，请重试'; error.classList.add('show'); }
+            finally { submitBtn.disabled = false; loading.classList.remove('show'); }
+        });
+    </script>
+</body>
+</html>

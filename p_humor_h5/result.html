@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>梗王争霸 - 结果</title>
+  <link rel="stylesheet" href="css/style.css">
+  <meta name="description" content="梗王争霸 - 幽默大挑战，看看你是哪种梗王？">
+  <meta property="og:title" content="梗王争霸 - 结果">
+  <meta property="og:description" id="og-desc" content="我得了[分数]分，成为[标签]！">
+</head>
+<body>
+  <div id="app">
+    <div class="result-container">
+      <div class="result-card">
+        <div class="rating" id="rating">D</div>
+        
+        <div class="tag-badge" id="tag-badge"></div>
+        
+        <div class="score">
+          <span class="score-value" id="final-score">0</span>
+          <span class="score-label">本局得分</span>
+        </div>
+        
+        <div class="explos-badge" id="explos-badge"></div>
+        
+        <div class="new-record" id="new-record" style="display:none">新纪录</div>
+        
+        <div class="stats">
+          <div class="stat-row">
+            <span>正确题数</span>
+            <span id="correct-count">0/10</span>
+          </div>
+          <div class="stat-row">
+            <span>最高连击</span>
+            <span id="max-streak">0连击</span>
+          </div>
+          <div class="stat-row">
+            <span>累计得分</span>
+            <span id="total-score-result">0</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="buttons">
+        <button class="btn-primary" onclick="location.href='game.html'">再来一局</button>
+        <button class="btn-share" onclick="shareResult()">📤 炫耀一下</button>
+        <button class="btn-invite" onclick="inviteFriend()">👥 邀友对战</button>
+        <button class="btn-ai" onclick="showAiAnalysis()">🤖 幽默体检</button>
+        <button class="btn-tip" onclick="showTips()">📖 玩梗锦囊</button>
+        <button class="btn-shop" onclick="location.href='shop.html'">🛒 爆笑小卖部</button>
+        <button class="btn-home" onclick="location.href='index.html'">🏠 返回首页</button>
+      </div>
+      
+      <div class="rank-section">
+        <h3>🏆 排行榜</h3>
+        <div class="rank-list" id="rank-list"></div>
+      </div>
+    </div>
+    
+    <div class="modal" id="tip-modal" style="display:none">
+      <div class="modal-content">
+        <div class="modal-title">📖 玩梗锦囊</div>
+        <div class="modal-text" id="tip-content"></div>
+        <div class="modal-arrows" id="tip-arrows" style="display:none">
+          <button onclick="prevTip()">◀</button>
+          <button onclick="nextTip()">▶</button>
+        </div>
+        <button class="modal-close" onclick="closeTips()">我知道了</button>
+      </div>
+    </div>
+    
+    <div class="modal" id="ai-modal" style="display:none">
+      <div class="modal-content">
+        <div class="modal-title">🤖 幽默体检</div>
+        <div class="modal-text" id="ai-content"></div>
+        <button class="modal-close" onclick="closeAiAnalysis()">我知道了</button>
+      </div>
+    </div>
+    
+    <div class="modal" id="share-modal" style="display:none">
+      <div class="modal-content">
+        <div class="modal-title">📤 炫耀一下</div>
+        <div class="modal-text" id="share-text"></div>
+        <div class="share-buttons">
+          <button class="btn-share-wechat" onclick="shareToWechat()">💚 微信好友</button>
+          <button class="btn-share-moments" onclick="shareToMoments()">💙 朋友圈</button>
+          <button class="btn-copy-link" onclick="copyLink()">🔗 复制链接</button>
+        </div>
+        <button class="modal-close" onclick="closeShare()">关闭</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="js/data.js"></script>
+  <script src="js/storage.js"></script>
+  <script>
+    var resultData = null;
+    var currentTipIndex = 0;
+    var tips = [];
+    var userTag = '';
+    
+    var tags = [
+      { min: 10, name: '🔥 梗王', desc: '神梗制造机，全场MVP！' },
+      { min: 8, name: '🌟 段子王', desc: '段子输出机，笑到飙泪！' },
+      { min: 6, name: '😂 搞笑达人', desc: '幽默细胞拉满！' },
+      { min: 4, name: '😄 气氛组', desc: '有你在就不会冷场！' },
+      { min: 2, name: '😐 普通人', desc: '继续努力，下一个梗王就是你！' },
+      { min: 0, name: '🥶 冷梗王', desc: '你一开口，温度降10度...' }
+    ];
+    
+    function getTag(correctCount) {
+      for (var i = 0; i < tags.length; i++) {
+        if (correctCount >= tags[i].min) return tags[i];
+      }
+      return tags[tags.length - 1];
+    }
+    
+    function init() {
+      var data = sessionStorage.getItem('gameResult');
+      if (!data) {
+        location.href = 'index.html';
+        return;
+      }
+      
+      try {
+        resultData = JSON.parse(data);
+      } catch (e) {
+        location.href = 'index.html';
+        return;
+      }
+      
+      document.getElementById('final-score').textContent = resultData.score;
+      document.getElementById('correct-count').textContent = resultData.correctCount + '/10';
+      document.getElementById('max-streak').textContent = resultData.maxStreak + '连击';
+      document.getElementById('total-score-result').textContent = resultData.totalScore;
+      
+      var rating = getRating(resultData.correctCount, 10, 0);
+      var ratingEl = document.getElementById('rating');
+      ratingEl.textContent = rating;
+      ratingEl.className = 'rating ' + rating;
+      
+      userTag = getTag(resultData.correctCount);
+      document.getElementById('tag-badge').textContent = userTag.name + ' ' + userTag.desc;
+      document.getElementById('tag-badge').style.display = 'inline-block';
+      
+      if (resultData.explosCount > 0) {
+        document.getElementById('explos-badge').textContent = '🔥 爆炸 ' + resultData.explosCount + '次';
+        document.getElementById('explos-badge').style.display = 'inline-block';
+      } else {
+        document.getElementById('explos-badge').style.display = 'none';
+      }
+      
+      if (resultData.newHighScore === resultData.score) {
+        document.getElementById('new-record').style.display = 'inline-block';
+      }
+      
+      tips = [];
+      for (var i = 0; i < resultData.questions.length; i++) {
+        if (resultData.questions[i].tip) {
+          tips.push(resultData.questions[i].tip);
+        }
+      }
+      currentTipIndex = 0;
+      
+      updateRankList();
+      updateOgDesc();
+    }
+    
+    function updateOgDesc() {
+      var ogDesc = '我得了' + resultData.score + '分，成为' + userTag.name + '！' + userTag.desc;
+      document.getElementById('og-desc').setAttribute('content', ogDesc);
+    }
+    
+    function updateRankList() {
+      var scores = Storage.get('rankScores');
+      if (scores) {
+        try {
+          scores = JSON.parse(scores);
+        } catch (e) {
+          scores = [];
+        }
+      } else {
+        scores = [];
+      }
+      
+      scores.push({ score: resultData.score, tag: userTag.name, date: new Date().toLocaleDateString() });
+      scores.sort(function(a, b) { return b.score - a.score; });
+      scores = scores.slice(0, 10);
+      Storage.set('rankScores', JSON.stringify(scores));
+      
+      var html = '';
+      for (var i = 0; i < scores.length; i++) {
+        var isMe = (i === 0 && scores[i].score === resultData.score);
+        html += '<div class="rank-item' + (isMe ? ' rank-me' : '') + '">';
+        html += '<span class="rank-num">' + (i + 1) + '</span>';
+        html += '<span class="rank-score">' + scores[i].score + '</span>';
+        html += '<span class="rank-tag">' + scores[i].tag + '</span>';
+        html += '</div>';
+      }
+      
+      if (scores.length === 0) {
+        html = '<div class="rank-empty">暂无排行，快来挑战吧！</div>';
+      }
+      
+      document.getElementById('rank-list').innerHTML = html;
+    }
+    
+    function showTips() {
+      if (tips.length === 0) return;
+      
+      document.getElementById('tip-content').textContent = tips[currentTipIndex];
+      document.getElementById('tip-modal').style.display = 'flex';
+      
+      document.getElementById('tip-arrows').style.display = tips.length > 1 ? 'flex' : 'none';
+    }
+    
+    function closeTips() {
+      document.getElementById('tip-modal').style.display = 'none';
+    }
+    
+    function prevTip() {
+      if (tips.length === 0) return;
+      currentTipIndex--;
+      if (currentTipIndex < 0) currentTipIndex = tips.length - 1;
+      showTips();
+    }
+    
+    function nextTip() {
+      if (tips.length === 0) return;
+      currentTipIndex++;
+      if (currentTipIndex >= tips.length) currentTipIndex = 0;
+      showTips();
+    }
+    
+    function shareResult() {
+      var shareText = '我得了' + resultData.score + '分，成为' + userTag.name + '！' + userTag.desc + '\n\n一起来玩梗王争霸，看看你是哪种梗王？';
+      document.getElementById('share-text').textContent = shareText;
+      document.getElementById('share-modal').style.display = 'flex';
+    }
+    
+    function closeShare() {
+      document.getElementById('share-modal').style.display = 'none';
+    }
+    
+    function shareToWechat() {
+      if (navigator.share) {
+        navigator.share({
+          title: '梗王争霸 - 结果',
+          text: '我得了' + resultData.score + '分，成为' + userTag.name + '！' + userTag.desc,
+          url: location.href
+        });
+      } else {
+        alert('请点击右上角分享到微信');
+      }
+    }
+    
+    function shareToMoments() {
+      alert('请点击右上角分享到朋友圈');
+    }
+    
+    function copyLink() {
+      var text = '我得了' + resultData.score + '分，成为' + userTag.name + '！' + userTag.desc + '\n\n一起来玩梗王争霸：' + location.href;
+      navigator.clipboard.writeText(text).then(function() {
+        alert('链接已复制，快去分享给朋友吧！');
+      });
+    }
+    
+    function inviteFriend() {
+      var inviteText = '梗王争霸邀你对战！我得了' + resultData.score + '分，你敢来吗？\n\n' + location.href;
+      if (navigator.share) {
+        navigator.share({
+          title: '梗王争霸 - 邀友对战',
+          text: inviteText
+        });
+      } else {
+        navigator.clipboard.writeText(inviteText).then(function() {
+          alert('邀请链接已复制，快发给朋友对战吧！');
+        });
+      }
+    }
+    
+    function showAiAnalysis() {
+      if (!resultData) return;
+      
+      var correctCount = resultData.correctCount;
+      var maxStreak = resultData.maxStreak;
+      var avgTimeSpent = resultData.avgTimeSpent;
+      
+      var firstPlayDate = Storage.get('firstPlayDate');
+      var gameAge = 0;
+      if (firstPlayDate) {
+        var firstDate = new Date(firstPlayDate);
+        var now = new Date();
+        gameAge = Math.floor((now - firstDate) / (1000 * 60 * 60 * 24)) + 1;
+      } else {
+        Storage.set('firstPlayDate', new Date().toISOString().split('T')[0]);
+        gameAge = 1;
+      }
+      
+      var bodyTemp = '', pulse = '', bloodType = '', weakness = '', suggestion = '';
+      
+      if (correctCount >= 8) {
+        bodyTemp = '37.5℃ - 热梗狂魔，全场爆笑！';
+        bloodType = 'AB型 - 神反转王！你的脑洞比黑洞还大，结局永远猜不到～';
+        weakness = '反转和讽刺类对你来说小case，但偶尔也会被自己的智商笑到～';
+        suggestion = '你已经是最强梗王了！建议去脱口秀大会踢馆，笑翻全场！';
+      } else if (correctCount >= 6) {
+        bodyTemp = '37.2℃ - 微热梗王！热梗制造机预备役～';
+        bloodType = 'B型 - 段子输出机！你脑子里装的不是知识，是源源不断的段子～';
+        weakness = '对反转类题目还挺6，但遇到荒谬延伸就容易懵圈～';
+        suggestion = '再练习练习反转类题目王者就是你了！建议多刷短视频积累段子素材～';
+      } else if (correctCount >= 4) {
+        bodyTemp = '36.6℃ - 幽默正常！不冷不热刚刚好～';
+        bloodType = 'A型 - 温柔搞笑！你很安全，不伤人，就是有时候笑点有点高～';
+        weakness = '对讽刺类完全不感冒，get不到阴阳怪气的点～';
+        suggestion = '建议多看弹幕吐槽大会，感受一下话里有话的魅力～';
+      } else if (correctCount >= 2) {
+        bodyTemp = '36.0℃ - 微冷体质！你说的笑话能让人凉快一下～';
+        bloodType = 'O型 - 百搭气氛组！你负责笑就行不用懂梗～';
+        weakness = '简直是幽默小白，答题全靠缘分和蒙～';
+        suggestion = '别慌！幽默可以练！建议先从为什么开始，学会质疑一切～';
+      } else {
+        bodyTemp = '35.5℃ - 冷梗之王！你一张口，温度直接降10度～';
+        bloodType = 'O型 - 气氛组担当！你负责微笑就好了，梗的事情交给别人～';
+        weakness = '笑点是什么？你与幽默之间隔了一整个银河系～';
+        suggestion = '建议换个星球生活吧，或者多看看喜剧片，绝对笑不出来那种！';
+      }
+      
+      if (avgTimeSpent < 3000) {
+        pulse = '100次/分 - 秒接神梗！你是接梗仙人，反应快到飞起！';
+      } else if (avgTimeSpent < 5000) {
+        pulse = '72次/分 - 平稳接梗！反应大众水平，没毛病～';
+      } else if (avgTimeSpent < 7000) {
+        pulse = '60次/分 - 反射弧较长！等你反应回来，黄花菜都凉了～';
+      } else {
+        pulse = '50次/分 - 反射弧超长！别人讲完段子，你才开始酝酿笑声～';
+      }
+      
+      var analysis = '梗龄：' + gameAge + '天\n\n';
+      analysis += '玩梗体温\n' + bodyTemp + '\n\n';
+      analysis += '接梗脉搏\n' + pulse + '\n\n';
+      analysis += '幽默血型\n' + bloodType + '\n\n';
+      analysis += '幽默长短板分析\n' + weakness + '\n\n';
+      analysis += '建议\n' + suggestion;
+      
+      document.getElementById('ai-content').textContent = analysis;
+      document.getElementById('ai-modal').style.display = 'flex';
+    }
+    
+    function closeAiAnalysis() {
+      document.getElementById('ai-modal').style.display = 'none';
+    }
+    
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

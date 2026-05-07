@@ -1,0 +1,38 @@
+<view class="container">
+  <view class="header">
+    <view class="header-info">
+      <text class="article-title">{{article.title}}</text>
+      <text class="article-meta">{{article.date}} {{article.weather}}</text>
+    </view>
+    <view class="header-actions">
+      <text class="action-btn" bindtap="toggleEdit">编辑</text>
+      <text class="action-btn" bindtap="deleteArticle">删除</text>
+    </view>
+  </view>
+
+  <view class="content" wx:if="{{!isEdit}}">
+    <text class="article-content">{{article.content}}</text>
+    
+    <view class="media-section" wx:if="{{article.images.length > 0}}">
+      <image wx:for="{{article.images}}" wx:key="index" class="article-img" src="{{item}}" mode="widthFix" />
+    </view>
+    
+    <view class="media-section" wx:if="{{article.videos.length > 0}}">
+      <video wx:for="{{article.videos}}" wx:key="index" class="article-video" src="{{item}}" />
+    </view>
+  </view>
+
+  <view class="edit-section" wx:if="{{isEdit}}">
+    <input class="edit-title" value="{{editTitle}}" bindinput="onTitleChange" placeholder="标题" />
+    <textarea class="edit-content" value="{{editContent}}" bindinput="onContentChange" auto-height placeholder="内容" />
+    <view class="edit-actions">
+      <button class="btn-cancel" bindtap="toggleEdit">取消</button>
+      <button class="btn-save" bindtap="saveArticle">保存</button>
+    </view>
+  </view>
+
+  <view class="footer-actions">
+    <button class="btn-action" bindtap="copyContent">复制</button>
+    <button class="btn-action" open-type="share">分享</button>
+  </view>
+</view>

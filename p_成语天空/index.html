@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成语天空</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            background: linear-gradient(135deg, #87CEEB 0%, #E0F6FF 50%, #98FB98 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .settings {
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .setting-row label { font-weight: bold; color: #333; }
+        select {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 2px solid #87CEEB;
+            font-size: 16px;
+        }
+        .start-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .start-btn:hover { transform: scale(1.02); }
+        .game-area {
+            display: none;
+            background: rgba(255,255,255,0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        .progress-bar {
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            transition: width 0.3s;
+        }
+        .score-display {
+            text-align: center;
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .score-display span { color: #4CAF50; font-weight: bold; font-size: 1.4em; }
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .difficulty-score {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .difficulty-score span { font-size: 1.3em; }
+        .speed-score {
+            color: #2196F3;
+            font-weight: bold;
+        }
+        .speed-score span { font-size: 1.3em; }
+        .switch-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .switch-bar select {
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 2px solid #87CEEB;
+            font-size: 14px;
+            background: white;
+        }
+        .chengyu-display {
+            text-align: center;
+            margin: 25px 0;
+        }
+        .chengyu-word {
+            font-size: 3em;
+            font-weight: bold;
+            color: #2c3e50;
+            letter-spacing: 15px;
+            margin-bottom: 15px;
+        }
+        .current-mode {
+            text-align: left;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .chengyu-word .hidden-char {
+            color: #e74c3c;
+            text-decoration: underline;
+        }
+        .chengyu-word .filled-char {
+            color: #2196F3;
+        }
+        .shiyi {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #87CEEB;
+            color: #555;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        .input-area {
+            margin-top: 25px;
+        }
+        .input-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .input-box input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .input-box input:focus {
+            outline: none;
+            border-color: #87CEEB;
+        }
+        .voice-btn {
+            padding: 12px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+        }
+        .voice-btn.recording {
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .char-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .char-option {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border: 2px solid #87CEEB;
+            border-radius: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .char-option:hover {
+            background: #87CEEB;
+            color: white;
+        }
+        .char-option.used {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        .char-option.correct {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        .char-option.wrong {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+        .slot-area {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .slot {
+            width: 50px;
+            height: 50px;
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .slot.filled {
+            border-style: solid;
+            border-color: #2196F3;
+            color: #2196F3;
+            background: #E3F2FD;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .result-area {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        .result-area.correct {
+            background: #d4edda;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        .result-area.wrong {
+            background: #f8d7da;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        .result-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .result-area strong {
+            color: #e74c3c;
+        }
+        .result-area em {
+            color: #666;
+            font-style: italic;
+        }
+        .ai-sentence {
+            background: #fff3cd;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 1.1em;
+            color: #333;
+        }
+        .next-btn {
+            padding: 12px 30px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+        .end-screen {
+            display: none;
+            text-align: center;
+            background: rgba(255,255,255,0.95);
+            padding: 40px;
+            border-radius: 15px;
+        }
+        .final-score {
+            font-size: 4em;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .final-msg {
+            font-size: 1.5em;
+            color: #333;
+            margin: 20px 0;
+        }
+        .restart-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        .clear-btn {
+            padding: 10px 20px;
+            background: #9E9E9E;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .user-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 10px;
+        }
+        .user-bar span { color: #666; }
+        .login-btn {
+            padding: 8px 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .login-panel {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .login-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .login-content h3 { margin-bottom: 10px; }
+        .login-tip { color: #666; font-size: 0.9em; margin-bottom: 20px; }
+        .login-content input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+        .login-submit {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .guest-btn {
+            width: 100%;
+            padding: 10px;
+            background: #9E9E9E;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .close-btn {
+            padding: 8px 20px;
+            background: transparent;
+            color: #666;
+            border: none;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+        .stats-panel {
+            display: none;
+            background: rgba(255,255,255,0.9);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .stats-panel.show { display: block; }
+        .stats-panel .stat-item {
+            display: inline-block;
+            margin: 0 15px;
+            color: #666;
+        }
+        .stats-panel .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .progress-detail {
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☁️ 成语天空 ☁️</h1>
+        <p class="subtitle" id="subtitle">填成语，学谦辞敬辞</p>
+        
+        <div class="user-bar" id="userBar">
+            <span id="userInfo">未登录</span>
+            <div>
+                <button class="login-btn" id="exportBtn" onclick="exportData()" style="display:none;">导出</button>
+                <button class="login-btn" id="loginBtn" onclick="showLoginPanel()">登录/注册</button>
+            </div>
+        </div>
+        
+        <div class="login-panel" id="loginPanel" style="display:none;">
+            <div class="login-content">
+                <h3>登录 / 注册</h3>
+                <p class="login-tip">输入任意昵称即可开始，积分自动保存</p>
+                <input type="text" id="loginPhone" placeholder="输入昵称" maxlength="20">
+                <button class="login-submit" onclick="loginOrRegister()">开始</button>
+                <button class="guest-btn" onclick="playAsGuest()">游客体验</button>
+                <button class="close-btn" onclick="closeLoginPanel()">关闭</button>
+            </div>
+        </div>
+        
+        <div class="settings" id="settings">
+            <div class="setting-row">
+                <label>玩法：</label>
+                <select id="playMode">
+                    <option value="text">选字输入</option>
+                    <option value="voice">语音输入</option>
+                    <option value="select" selected>文字填入</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label>隐藏字数：</label>
+                <select id="hideCount">
+                    <option value="1">隐藏1个字</option>
+                    <option value="2" selected>隐藏2个字</option>
+                    <option value="3">隐藏3个字</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label>干扰字数：</label>
+                <select id="distractorCount">
+                    <option value="3">3个</option>
+                    <option value="5" selected>5个</option>
+                    <option value="7">7个</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label>创意模式：</label>
+                <select id="aiMode" onchange="toggleAIInspiration()">
+                    <option value="sentence">只造句</option>
+                    <option value="story">写故事</option>
+                </select>
+            </div>
+            <div class="setting-row" id="inspirationRow" style="display:none;">
+                <label>灵感：</label>
+                <input type="text" id="inspiration" value="小花猫去春游" style="padding:8px;border-radius:8px;border:2px solid #87CEEB;width:60%;">
+            </div>
+            <button class="start-btn" onclick="startGame()">开始游戏</button>
+        </div>
+
+        <div class="game-area" id="gameArea">
+            <div class="progress-bar">
+                <div class="progress" id="progress"></div>
+            </div>
+            <div class="score-header">
+                <span class="difficulty-score">难度：<span id="difficultyScore">20</span>分</span>
+                <span class="current-score">速度：<span id="speedScore">0</span>分</span>
+            </div>
+            <div class="score-display">累计：<span id="score">0</span> / <span id="total">10</span>题</div>
+            
+            <div class="switch-bar">
+                <select id="gameMode" onchange="switchGameMode()">
+                    <option value="text">文字输入</option>
+                    <option value="voice">语音输入</option>
+                    <option value="select">选字填入</option>
+                </select>
+                <select id="chengyuType" onchange="switchChengyuType()">
+                    <option value="all">全部</option>
+                    <option value="敬辞">敬辞</option>
+                    <option value="谦辞">谦辞</option>
+                </select>
+                <select id="gameHideCount" onchange="switchHideCount()">
+                    <option value="1">隐藏1字</option>
+                    <option value="2" selected>隐藏2字</option>
+                    <option value="3">隐藏3字</option>
+                </select>
+                <select id="gameDistractor" onchange="switchDistractor()">
+                    <option value="3">3干扰</option>
+                    <option value="5" selected>5干扰</option>
+                    <option value="7">7干扰</option>
+                </select>
+                <select id="gameAIMode" onchange="switchAIMode()">
+                    <option value="sentence">只造句</option>
+                    <option value="story">写故事</option>
+                </select>
+            </div>
+            <div class="switch-bar" id="gameInspirationRow" style="display:none;">
+                <input type="text" id="gameInspiration" value="小花猫去春游" style="padding:8px;border-radius:8px;border:2px solid #87CEEB;width:50%;">
+            </div>
+            
+            <div class="chengyu-display">
+                <div class="current-mode" id="currentMode">选字模式</div>
+                <div class="chengyu-word" id="chengyuWord"></div>
+                <div class="shiyi" id="shiyi"></div>
+            </div>
+
+            <div class="input-area" id="inputArea">
+                <div id="textInputArea">
+                    <div class="input-box">
+                        <input type="text" id="userInput" placeholder="请输入完整成语" maxlength="4">
+                        <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+                    </div>
+                    <button class="submit-btn" onclick="checkAnswer()">提交答案</button>
+                </div>
+                
+                <div id="selectInputArea" style="display:none;">
+                    <div class="slot-area" id="slotArea"></div>
+                    <div class="char-options" id="charOptions"></div>
+                    <button class="submit-btn" onclick="checkSelectAnswer()">确认答案</button>
+                </div>
+            </div>
+
+            <div class="result-area" id="resultArea">
+                <div class="result-icon" id="resultIcon"></div>
+                <div id="resultText"></div>
+                <button class="next-btn" onclick="nextQuestion()">下一题</button>
+            </div>
+        </div>
+
+        <div class="end-screen" id="endScreen">
+            <h2>游戏结束！</h2>
+            <div class="final-score" id="finalScore">0</div>
+            <div class="final-msg" id="finalMsg"></div>
+            <button class="restart-btn" onclick="restartGame()">再玩一次</button>
+        </div>
+    </div>
+
+    <script>
+        console.log('[DEBUG] Script loaded');
+        
+        window.onerror = function(msg, url, line, col, error) {
+            console.error('[GLOBAL ERROR]', msg, 'line:', line, 'col:', col);
+            alert('程序错误: ' + msg + '\n行号: ' + line);
+            return true;
+        };
+        
+        let chengyuData = [];
+        let userData = null;
+        
+        // 动态加载成语库
+        async function loadChengyuLibrary() {
+            try {
+                const response = await fetch('成语库.json');
+                if (response.ok) {
+                    chengyuData = await response.json();
+                    console.log('[DEBUG] Loaded from JSON:', chengyuData.length);
+                    return;
+                }
+            } catch (e) {
+                console.log('[DEBUG] JSON load failed, using built-in data');
+            }
+            // 降级：使用内置数据
+            chengyuData = _oldChengyuData;
+            console.log('[DEBUG] Using built-in data, count:', chengyuData.length);
+        }
+        
+        // 用户系统
+        function getUserKey() { return 'cy_user_' + (userData?.phone || 'guest'); }
+        
+        function saveUserScore() {
+            if (!userData) return;
+            const key = 'score_' + userData.phone;
+            localStorage.setItem(key, JSON.stringify({
+                totalScore: userData.totalScore,
+                lastPlay: new Date().toISOString()
+            }));
+        }
+        
+        function saveChengyuProgress(chengyu, correct) {
+            if (!userData || userData.isGuest) return;
+            const key = 'progress_' + userData.phone;
+            let progress = JSON.parse(localStorage.getItem(key) || '{}');
+            if (!progress[chengyu]) progress[chengyu] = { count: 0, correct: 0 };
+            progress[chengyu].count++;
+            if (correct) progress[chengyu].correct++;
+            localStorage.setItem(key, JSON.stringify(progress));
+        }
+        
+        function getChengyuProgress(chengyu) {
+            if (!userData || userData.isGuest) return null;
+            const key = 'progress_' + userData.phone;
+            const progress = JSON.parse(localStorage.getItem(key) || '{}');
+            return progress[chengyu] || null;
+        }
+        
+        function loginOrRegister() {
+            const name = document.getElementById('loginPhone').value.trim();
+            if (!name) {
+                alert('请输入昵称');
+                return;
+            }
+            userData = { phone: name, totalScore: 0, isGuest: false };
+            const key = 'score_' + name;
+            const saved = JSON.parse(localStorage.getItem(key) || 'null');
+            if (saved) userData.totalScore = saved.totalScore;
+            updateUserUI();
+            closeLoginPanel();
+        }
+        
+        function playAsGuest() {
+            userData = { phone: 'guest_' + Date.now(), totalScore: 0, isGuest: true };
+            updateUserUI();
+            closeLoginPanel();
+        }
+        
+        function updateUserUI() {
+            document.getElementById('userBar').style.display = 'flex';
+            if (userData) {
+                const label = userData.isGuest ? '游客' : ('用户: ' + userData.phone.slice(-4));
+                const scoreInfo = userData.isGuest ? '' : (' | 累计' + userData.totalScore + '分');
+                document.getElementById('userInfo').textContent = label + scoreInfo;
+                document.getElementById('loginBtn').textContent = '切换用户';
+                document.getElementById('loginBtn').style.display = userData.isGuest ? 'inline-block' : 'none';
+                document.getElementById('exportBtn').style.display = userData.isGuest ? 'none' : 'inline-block';
+            } else {
+                document.getElementById('exportBtn').style.display = 'none';
+            }
+        }
+        
+        function showLoginPanel() {
+            document.getElementById('loginPanel').style.display = 'flex';
+            document.getElementById('loginPhone').value = '';
+        }
+        
+        function closeLoginPanel() {
+            document.getElementById('loginPanel').style.display = 'none';
+        }
+        
+        function showStats(chengyu) {
+            const progress = getChengyuProgress(chengyu);
+            if (!progress) return '';
+            const rate = Math.round(progress.correct / progress.count * 100);
+            return `<div class="progress-detail">已学${progress.count}次 | 正确${progress.correct}次(${rate}%)</div>`;
+        }
+        
+        function exportData() {
+            if (!userData || userData.isGuest) return;
+            const key = 'progress_' + userData.phone;
+            const progress = JSON.parse(localStorage.getItem(key) || '{}');
+            let csv = '成语,学习次数,正确次数,正确率\n';
+            for (const [cy, p] of Object.entries(progress)) {
+                const rate = Math.round(p.correct / p.count * 100);
+                csv += `${cy},${p.count},${p.correct},${rate}%\n`;
+            }
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '成语学习记录_' + userData.phone + '.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        let chengyuData = [];
+        let loadChengyuLibraryPromise = null;
+        
+        // 页面加载时直接初始化数据
+        window.addEventListener('DOMContentLoaded', () => {
+            // 直接使用内置数据，避免异步加载问题
+            chengyuData = _oldChengyuData;
+            console.log('[DEBUG] Data ready, count:', chengyuData.length);
+        });
+        
+        // 动态加载成语库（暂时保留，如需可启用）
+        
+        // 旧版兼容：空数据
+        const _oldChengyuData = [
+            {"chengyu":"大材小用","shiyi":"把大的材料用在小处。比喻才能很高的人屈就于低下职位，不能充分发挥其才能。","type":"敬辞"},
+            {"chengyu":"高朋满座","shiyi":"高贵的朋友坐满了席位。形容宾客很多。","type":"敬辞"},
+            {"chengyu":"高抬贵手","shiyi":"客套话，多用于请求对方饶恕或通融。","type":"敬辞"},
+            {"chengyu":"率先垂范","shiyi":"带头给下级或晚辈做示范。","type":"敬辞"},
+            {"chengyu":"洗耳恭听","shiyi":"洗清耳朵，恭敬地听讲。形容恭敬而认真地听人讲话。","type":"敬辞"},
+            {"chengyu":"虚怀若谷","shiyi":"谦虚的胸怀像山谷一样空旷深广。形容非常谦虚。","type":"敬辞"},
+            {"chengyu":"虚左以待","shiyi":"空着左边的位置等待客人，表示尊敬。也泛指留出位置恭候他人。","type":"敬辞"},
+            {"chengyu":"班门弄斧","shiyi":"比喻在行家面前卖弄本领。","type":"谦辞"},
+            {"chengyu":"笨鸟先飞","shiyi":"表示自己能力差，恐怕落后，比别人先行一步。","type":"谦辞"},
+            {"chengyu":"敝帚自珍","shiyi":"比喻自己的东西再不好也值得珍惜。","type":"谦辞"},
+            {"chengyu":"不情之请","shiyi":"客套话，不合情理的请求（向人求助时称自己的请求）。","type":"谦辞"},
+            {"chengyu":"不足挂齿","shiyi":"事情轻微，不值得一提。","type":"谦辞"},
+            {"chengyu":"才疏学浅","shiyi":"见识不广，学问不深。","type":"谦辞"},
+            {"chengyu":"德薄才疏","shiyi":"品行和才能都很差。","type":"谦辞"},
+            {"chengyu":"雕虫小技","shiyi":"比喻微不足道的技能（多指文字技巧）。","type":"谦辞"},
+            {"chengyu":"抛砖引玉","shiyi":"抛出砖去，引回玉来。比喻用粗浅的意见引出别人高明的意见。","type":"谦辞"},
+            {"chengyu":"蓬荜生辉","shiyi":"用以称谢别人来到自己家里。","type":"谦辞"},
+            {"chengyu":"无功受禄","shiyi":"没有功劳而得到报酬。","type":"谦辞"},
+            {"chengyu":"信笔涂鸦","shiyi":"形容字写得很坏。","type":"谦辞"},
+            {"chengyu":"贻笑大方","shiyi":"指让学者或行家笑话。","type":"谦辞"},
+            {"chengyu":"地主之谊","shiyi":"当地的主人应尽的义务与责任。","type":"敬辞"},
+            {"chengyu":"鼎力相助","shiyi":"敬辞，大力相助（表示请托或感谢时用）。","type":"敬辞"},
+            {"chengyu":"不吝赐教","shiyi":"敬辞，请对方给予指教。","type":"敬辞"},
+            {"chengyu":"多多指教","shiyi":"敬辞，请人多给予指导。","type":"敬辞"},
+            {"chengyu":"斧正","shiyi":"敬辞，请人修改文章。","type":"敬辞"},
+            {"chengyu":"甘拜下风","shiyi":"自认不如，甘心服从。","type":"敬辞"},
+            {"chengyu":"姑妄听之","shiyi":"姑且随便听听，不一定认真相信。","type":"谦辞"},
+            {"chengyu":"挂一漏万","shiyi":"形容列举到的很少，遗漏掉的很多，很不完备。","type":"谦辞"},
+            {"chengyu":"管窥蠡测","shiyi":"比喻眼界狭窄，见识浅陋。","type":"谦辞"},
+            {"chengyu":"敬谢不敏","shiyi":"表示推辞做某事的客气话。","type":"谦辞"},
+            {"chengyu":"聊表寸心","shiyi":"略微表示一下心意。","type":"谦辞"},
+            {"chengyu":"门可罗雀","shiyi":"形容十分冷落，宾客稀少。","type":"谦辞"},
+            {"chengyu":"容膝之安","shiyi":"本指可以立足的安身之地，常用来谦称自己的居处狭小。","type":"谦辞"},
+            {"chengyu":"尸位素餐","shiyi":"谦称自己未尽职责。","type":"谦辞"},
+            {"chengyu":"忝列门墙","shiyi":"表示自己愧在师门。","type":"谦辞"},
+            {"chengyu":"望尘莫及","shiyi":"同对方相比，差之甚远。","type":"谦辞"},
+            {"chengyu":"一得之见","shiyi":"表示自己一点浅薄的意见。","type":"谦辞"},
+            {"chengyu":"一孔之见","shiyi":"比喻狭隘片面的见解。","type":"谦辞"},
+            {"chengyu":"一知半解","shiyi":"所知不多，理解肤浅。","type":"谦辞"},
+            {"chengyu":"一枝之栖","shiyi":"只求得到一个藏身的地方，是自谦不存奢望的求职用语。","type":"谦辞"},
+            {"chengyu":"绵薄之力","shiyi":"谦称自己微薄的力量","type":"谦辞"},
+            {"chengyu":"鼎力支持","shiyi":"敬辞，大力支持。","type":"敬辞"},
+            {"chengyu":"关怀备至","shiyi":"关怀非常周到。","type":"敬辞"},
+            {"chengyu":"曲突徙薪","shiyi":"比喻事先采取措施，防止危险发生。","type":"敬辞"},
+            {"chengyu":"亲临其境","shiyi":"亲自来到某个地方。","type":"敬辞"},
+            {"chengyu":"失之交臂","shiyi":"形容当面错过，失掉好机会。","type":"谦辞"},
+            {"chengyu":"才疏智浅","shiyi":"才能少，智慧浅薄。","type":"谦辞"},
+            {"chengyu":"狗尾续貂","shiyi":"比喻用次品续在珍品之后，多用于文艺作品。","type":"谦辞"},
+            {"chengyu":"滥竽充数","shiyi":"本无才能却占据其位。","type":"谦辞"}
+        ];
+
+        const allChars = "天地人和春夏秋冬东南西北大小高低长短远近古今中外前后左右上下男女新老好坏死强弱真假善恶美丑新旧是非曲直功过成败";
+        
+        let gameState = {
+            currentIndex: 0,
+            score: 0,
+            totalQuestions: 10,
+            hideCount: 2,
+            distractorCount: 5,
+            playMode: 'text',
+            chengyuType: 'all',
+            currentChengyu: null,
+            hiddenIndices: [],
+            answers: [],
+            isRecording: false,
+            selectedChars: [],
+            charOptions: [],
+            questionStartTime: 0,
+            currentScore: 0,
+            aiMode: 'sentence',
+            inspiration: '小花猫去春游',
+            stories: []
+        };
+
+        const DOUBAO_API_KEY = 'fbe2e6b0-582c-42c8-80a7-b1cbd403500a';
+        const DOUBAO_URL = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+
+        const exampleSentences = {
+            "鼎力相助": ["感谢您鼎力相助，我才能顺利完成这件事。", "多亏朋友鼎力相助，这次活动才能成功举办。"],
+            "大材小用": ["让他做这个简单工作真的是大材小用。", "他有大才能，却在这里大材小用。"],
+            "高朋满座": ["今天宴会高朋满座，非常热闹。", "这里高朋满座，都是各界精英。"],
+            "高抬贵手": ["请高抬贵手，放我一马吧。", "希望您高抬贵手，不要为难我了。"],
+            "洗耳恭听": ["校长讲话，请大家洗耳恭听。", "老师讲话，同学们洗耳恭听。"],
+            "虚怀若谷": ["他虚怀若谷，待人谦和。", "前辈虚怀若谷，令人敬佩。"],
+            "虚左以待": ["我们虚左以待，欢迎贵宾到来。", "已经虚左以待，等您入座。"],
+            "班门弄斧": ["我不敢在专家面前班门弄斧。", "他竟在大师面前班门弄斧。"],
+            "笨鸟先飞": ["我笨鸟先飞，提前做准备。", "笨鸟先飞，我要更加努力。"],
+            "敝帚自珍": ["这虽然是旧东西，但我敝帚自珍。", "敝帚自珍，这是我的宝贝。"],
+            "不情之请": ["我有不情之请，请您帮忙。", "有不情之请，还请见谅。"],
+            "不足挂齿": ["小事不足挂齿，不必在意。", "这点帮助不足挂齿。"],
+            "才疏学浅": ["我才疏学浅，怕胜任不了。", "我才疏学浅，还需学习。"],
+            "德薄才疏": ["我德薄才疏，恐难当此任。", "自知德薄才疏，不敢邀功。"],
+            "雕虫小技": ["这只是雕虫小技，不值一提。", "雕虫小技，让大家见笑了。"],
+            "抛砖引玉": ["我抛砖引玉，请大家指教。", "先抛砖引玉，期待佳作。"],
+            "蓬荜生辉": ["贵客光临，蓬荜生辉。", "您来我家，蓬荜生辉。"],
+            "无功受禄": ["我无功受禄，愧不敢当。", "无功受禄，心里不安。"],
+            "信笔涂鸦": ["我只是信笔涂鸦，别见笑。", "信笔涂鸦，写着玩的。"],
+            "贻笑大方": ["献丑了，以免贻笑大方。", "怕贻笑大方，不敢献丑。"],
+            "地主之谊": ["略尽地主之谊，请不要客气。", "这是地主之谊，应该的。"],
+            "不吝赐教": ["请不吝赐教，多多指教。", "希望您不吝赐教。"],
+            "多多指教": ["初次见面，请多多指教。", "在下新人，请多多指教。"],
+            "斧正": ["请斧正，不胜感激。", "帮忙斧正，谢谢。"],
+            "甘拜下风": ["我甘拜下风，认输了。", "我不如你，甘拜下风。"],
+            "姑妄听之": ["我只是姑妄听之，不知道真假。", "姑妄听之，不必当真。"],
+            "挂一漏万": ["可能挂一漏万，请见谅。", "时间有限，挂一漏万。"],
+            "管窥蠡测": ["我只是管窥蠡测，见识浅薄。", "管窥蠡测，难以全面。"],
+            "敬谢不敏": ["这件事我敬谢不敏。", "敬谢不敏，不能接受。"],
+            "聊表寸心": ["聊表寸心，请收下。", "聊表寸心，不成敬意。"],
+            "门可罗雀": ["如今门可罗雀，冷清得很。", "这里门可罗雀，没什么人。"],
+            "容膝之安": ["只有容膝之安，屋子很小。", "容膝之安，勉强容身。"],
+            "尸位素餐": ["我不能尸位素餐，要做点事。", "尸位素餐，不如辞职。"],
+            "忝列门墙": ["我忝列门墙，已是荣幸。", "忝列门墙，不敢当。"],
+            "望尘莫及": ["你的水平让我望尘莫及。", "我望尘莫及，佩服。"],
+            "一得之见": ["这是我的一得之见，请指教。", "一得之见，供您参考。"],
+            "一孔之见": ["一孔之见，仅供参考。", "我这是一孔之见。"],
+            "一知半解": ["我只是一知半解。", "一知半解，说得不对请见谅。"],
+            "一枝之栖": ["只求一枝之栖，安身立命。", "给我一枝之栖即可。"],
+            "绵薄之力": ["愿尽绵薄之力帮助您。", "我出绵薄之力，略表心意。"],
+            "关怀备至": ["谢谢您关怀备至。", "组织关怀备至，很温暖。"],
+            "亲临其境": ["我有机会亲临其境。", "亲临其境，感受不同。"]
+        };
+
+        let recognition = null;
+        let SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+        if (SpeechRecognition) {
+            try {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'zh-CN';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                recognition.onresult = function(event) {
+                    console.log('[DEBUG] Speech result:', event.results);
+                    const result = event.results[0][0].transcript;
+                    document.getElementById('userInput').value = result;
+                    stopRecording();
+                };
+                recognition.onerror = function(event) {
+                    console.error('[ERROR] Speech error:', event.error);
+                    stopRecording();
+                    let msg = '语音识别失败';
+                    if (event.error === 'not-allowed') msg = '请允许麦克风权限';
+                    else if (event.error === 'no-speech') msg = '未检测到语音';
+                    else if (event.error === 'network') msg = '需要网络连接(HTTPS)';
+                    alert(msg + ' (' + event.error + ')，请重试或手动输入');
+                };
+                recognition.onend = function() {
+                    console.log('[DEBUG] Speech recognition ended');
+                    stopRecording();
+                };
+                console.log('[DEBUG] Speech recognition enabled');
+            } catch (e) {
+                console.error('[ERROR] Speech recognition init:', e);
+                recognition = null;
+            }
+        } else {
+            console.log('[DEBUG] Speech recognition not supported');
+        }
+
+        function shuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        async function startGame() {
+            try {
+                console.log('[DEBUG] startGame called');
+                
+                // 直接使用数据（已在DOMContentLoaded时初始化）
+                if (!chengyuData || chengyuData.length === 0) {
+                    console.log('[WARN] Using built-in data');
+                    chengyuData = _oldChengyuData;
+                }
+                
+                gameState.hideCount = parseInt(document.getElementById('hideCount').value);
+                gameState.distractorCount = parseInt(document.getElementById('distractorCount').value);
+                gameState.playMode = document.getElementById('playMode').value;
+                gameState.chengyuType = document.getElementById('chengyuType').value;
+                gameState.aiMode = document.getElementById('aiMode').value;
+                const inspirationInput = document.getElementById('inspiration').value;
+                gameState.inspiration = inspirationInput || document.getElementById('gameInspiration').value || '小花猫去春游';
+                gameState.score = 0;
+                gameState.currentIndex = 0;
+                gameState.stories = [];
+                cachedStory = '';
+                
+                const slogans = [
+                    '栖于微光，拾得片羽',
+                    '收集每一寸，闪光的小美好',
+                    '在碎片时光里，诗意地成长'
+                ];
+                const randomSlogan = slogans[Math.floor(Math.random() * slogans.length)];
+                document.getElementById('subtitle').textContent = randomSlogan;
+                
+                let filteredData = chengyuData;
+                if (gameState.chengyuType !== 'all') {
+                    filteredData = chengyuData.filter(item => item.type === gameState.chengyuType);
+                }
+                
+                if (filteredData.length < gameState.totalQuestions) {
+                    gameState.totalQuestions = filteredData.length;
+                    console.log('[WARN] Not enough data, using:', filteredData.length);
+                }
+                
+                gameState.answers = shuffle(filteredData).slice(0, gameState.totalQuestions);
+                console.log('[DEBUG] Selected answers:', gameState.answers.map(a => a.chengyu));
+                
+                document.getElementById('gameAIMode').value = gameState.aiMode;
+                document.getElementById('gameInspiration').value = gameState.inspiration;
+                document.getElementById('gameInspirationRow').style.display = gameState.aiMode === 'story' ? 'flex' : 'none';
+
+                document.getElementById('settings').style.display = 'none';
+                document.getElementById('gameArea').style.display = 'block';
+                document.getElementById('endScreen').style.display = 'none';
+
+                document.getElementById('textInputArea').style.display = gameState.playMode !== 'select' ? 'block' : 'none';
+                document.getElementById('selectInputArea').style.display = gameState.playMode === 'select' ? 'block' : 'none';
+                document.getElementById('voiceBtn').style.display = gameState.playMode === 'voice' ? 'block' : 'none';
+                if (gameState.playMode === 'voice') {
+                    document.getElementById('userInput').placeholder = '点击麦克风说成语';
+                } else if (gameState.playMode === 'text') {
+                    document.getElementById('userInput').placeholder = '请输入完整成语';
+                } else {
+                    document.getElementById('userInput').placeholder = '';
+                }
+
+                updateUI();
+                showQuestion();
+                console.log('[DEBUG] Game started successfully');
+            } catch (e) {
+                console.error('[ERROR] startGame:', e);
+                alert('游戏初始化失败: ' + e.message);
+            }
+        }
+
+        function showQuestion() {
+            try {
+                console.log('[DEBUG] showQuestion:', gameState.currentIndex);
+                
+                if (!gameState.stories) gameState.stories = [];
+                if (!gameState.answers || gameState.answers.length === 0) {
+                    console.error('[ERROR] No answers available');
+                    alert('题目数据错误！');
+                    return;
+                }
+                
+                if (gameState.currentIndex >= gameState.answers.length) {
+                    console.log('[DEBUG] All questions done');
+                    showEndScreen();
+                    return;
+                }
+                
+                const current = gameState.answers[gameState.currentIndex];
+                if (!current || !current.chengyu) {
+                    console.error('[ERROR] Invalid current question:', current);
+                    alert('题目数据错误！');
+                    return;
+                }
+                
+                gameState.currentChengyu = current;
+                console.log('[DEBUG] Current chengyu:', current.chengyu);
+                
+                const chars = current.chengyu.split('');
+                const indices = [];
+                if (gameState.hideCount >= chars.length) {
+                    console.warn('[WARN] hideCount too large, using 1');
+                    gameState.hideCount = 1;
+                }
+                while (indices.length < gameState.hideCount) {
+                    const idx = Math.floor(Math.random() * chars.length);
+                    if (!indices.includes(idx)) indices.push(idx);
+                }
+                indices.sort((a, b) => a - b);
+                gameState.hiddenIndices = indices;
+                console.log('[DEBUG] Hidden indices:', indices);
+
+                let displayHtml = '';
+                for (let i = 0; i < chars.length; i++) {
+                    if (indices.includes(i)) {
+                        displayHtml += `<span class="hidden-char">?</span>`;
+                    } else {
+                        displayHtml += chars[i];
+                    }
+                }
+                document.getElementById('chengyuWord').innerHTML = displayHtml;
+                document.getElementById('shiyi').innerHTML = `<strong>【释义】</strong>${current.shiyi || ''}`;
+                
+                const modeNames = { 'text': '文字模式', 'voice': '语音模式', 'select': '选字模式' };
+                document.getElementById('currentMode').textContent = modeNames[gameState.playMode] || '选字模式';
+                
+                const baseScore = gameState.playMode === 'select' ? 
+                    (gameState.hideCount === 1 ? 5 : gameState.hideCount === 2 ? 10 : 15) :
+                    (gameState.hideCount === 1 ? 10 : gameState.hideCount === 2 ? 20 : 30);
+                document.getElementById('difficultyScore').textContent = baseScore;
+                document.getElementById('speedScore').textContent = '0';
+                
+                document.getElementById('userInput').value = '';
+                document.getElementById('resultArea').style.display = 'none';
+                document.getElementById('inputArea').style.display = 'block';
+                gameState.stories = [];
+                cachedStory = '';
+                gameState.questionStartTime = Date.now();
+                console.log('[DEBUG] Question start time:', gameState.questionStartTime);
+
+                if (gameState.playMode === 'select') {
+                    prepareSelectMode();
+                }
+                
+                if (gameState.aiMode === 'story') {
+                    preCallAISentence(current.chengyu);
+                }
+                
+                console.log('[DEBUG] showQuestion done');
+            } catch (e) {
+                console.error('[ERROR] showQuestion:', e);
+                alert('显示题目失败: ' + e.message);
+            }
+        }
+
+        function prepareSelectMode() {
+            try {
+                console.log('[DEBUG] prepareSelectMode distractor:', gameState.distractorCount);
+                gameState.selectedChars = [];
+                const current = gameState.currentChengyu;
+                const hiddenChars = gameState.hiddenIndices.map(i => current.chengyu[i]);
+                const totalOptions = hiddenChars.length + gameState.distractorCount;
+                console.log('[DEBUG] Hidden chars:', hiddenChars, 'total options:', totalOptions);
+                
+                // 去重allChars
+                const uniqueChars = [];
+                for (const c of allChars) {
+                    if (!uniqueChars.includes(c) && !hiddenChars.includes(c)) {
+                        uniqueChars.push(c);
+                    }
+                }
+                const otherChars = shuffle(uniqueChars).slice(0, gameState.distractorCount);
+                const mixedOptions = shuffle([...hiddenChars, ...otherChars]);
+                const options = shuffle(mixedOptions);
+                gameState.charOptions = options;
+                console.log('[DEBUG] Options:', options);
+
+                let slotHtml = '';
+                for (let i = 0; i < 4; i++) {
+                    if (gameState.hiddenIndices.includes(i)) {
+                        slotHtml += `<div class="slot" data-index="${i}"></div>`;
+                    } else {
+                        slotHtml += `<div class="slot filled">${current.chengyu[i]}</div>`;
+                    }
+                }
+                document.getElementById('slotArea').innerHTML = slotHtml;
+
+                let optionsHtml = '';
+                options.forEach((char, idx) => {
+                    optionsHtml += `<div class="char-option" data-char="${char}" data-idx="${idx}" onclick="selectChar('${char}', ${idx})">${char}</div>`;
+                });
+                document.getElementById('charOptions').innerHTML = optionsHtml;
+                console.log('[DEBUG] prepareSelectMode done');
+            } catch (e) {
+                console.error('[ERROR] prepareSelectMode:', e);
+                alert('选字模式初始化失败: ' + e.message);
+            }
+        }
+
+        function selectChar(char, idx) {
+            const optionEl = document.querySelector(`.char-option[data-idx="${idx}"]`);
+            if (optionEl.classList.contains('used')) return;
+
+            const emptySlot = document.querySelector('.slot:not(.filled)');
+            if (!emptySlot) return;
+
+            optionEl.classList.add('used');
+            emptySlot.textContent = char;
+            emptySlot.classList.add('filled');
+            emptySlot.dataset.char = char;
+
+            const slotIndex = parseInt(emptySlot.dataset.index);
+            gameState.selectedChars[slotIndex] = char;
+
+            if (document.querySelectorAll('.slot:not(.filled)').length === 0) {
+                checkSelectAnswer();
+            }
+        }
+
+        function checkSelectAnswer() {
+            const current = gameState.currentChengyu;
+            let userAnswer = '';
+            const slots = document.querySelectorAll('.slot');
+            slots.forEach(slot => {
+                userAnswer += slot.textContent;
+            });
+
+            const isCorrect = userAnswer === current.chengyu;
+            showResult(isCorrect, current.chengyu);
+
+            if (isCorrect) {
+                const options = document.querySelectorAll('.char-option');
+                options.forEach(opt => {
+                    if (!opt.classList.contains('used')) {
+                        const char = opt.dataset.char;
+                        if (current.chengyu.includes(char)) {
+                            opt.classList.add('correct');
+                        }
+                    }
+                });
+            }
+        }
+
+        function checkAnswer() {
+            const userInput = document.getElementById('userInput').value.trim();
+            if (!userInput) {
+                alert('请输入答案');
+                return;
+            }
+
+            const current = gameState.currentChengyu;
+            let isCorrect = false;
+
+            if (gameState.playMode === 'voice' || gameState.playMode === 'text') {
+                isCorrect = userInput === current.chengyu;
+            }
+
+            showResult(isCorrect, current.chengyu);
+        }
+
+        function showResult(isCorrect, answer) {
+            const resultArea = document.getElementById('resultArea');
+            const resultIcon = document.getElementById('resultIcon');
+            const resultText = document.getElementById('resultText');
+
+            resultArea.style.display = 'block';
+            resultArea.className = 'result-area ' + (isCorrect ? 'correct' : 'wrong');
+            
+            if (isCorrect) {
+                const timeUsed = (Date.now() - gameState.questionStartTime) / 1000;
+                console.log('[DEBUG] Time used:', timeUsed, 'seconds');
+                
+                const baseScore = gameState.playMode === 'select' ? 
+                    (gameState.hideCount === 1 ? 5 : gameState.hideCount === 2 ? 10 : 15) :
+                    (gameState.hideCount === 1 ? 10 : gameState.hideCount === 2 ? 20 : 30);
+                
+                let speedBonus = 0;
+                if (timeUsed <= 3) speedBonus = 10;
+                else if (timeUsed <= 6) speedBonus = 5;
+                else if (timeUsed > 10) speedBonus = -5;
+                
+                const questionScore = baseScore + speedBonus;
+                gameState.score += questionScore;
+                gameState.currentScore = questionScore;
+                
+                // 保存用户积分和学习记录
+                if (userData && !userData.isGuest) {
+                    userData.totalScore += questionScore;
+                    saveUserScore();
+                    saveChengyuProgress(answer, true);
+                }
+                
+                document.getElementById('speedScore').textContent = (speedBonus >= 0 ? '+' : '') + speedBonus;
+                
+                resultIcon.textContent = '✅';
+                const progressHtml = showStats(answer);
+                resultText.innerHTML = `正确！答案是：<strong>${answer}</strong><br>得分：${baseScore}(基础)+${speedBonus >= 0 ? '+' : ''}${speedBonus}(速度)=<strong>${questionScore}</strong>分${progressHtml}`;
+                
+                callAISentence(answer);
+            } else {
+                gameState.currentScore = 0;
+                // 记录学习次数（即使错误）
+                if (userData && !userData.isGuest) {
+                    saveChengyuProgress(answer, false);
+                }
+                document.getElementById('speedScore').textContent = '0';
+                resultIcon.textContent = '❌';
+                const progressHtml = showStats(answer);
+                resultText.innerHTML = `错误！正确答案是：<strong>${answer}</strong><br>本题得分：<strong>0</strong>分${progressHtml}`;
+            }
+
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('inputArea').style.display = 'none';
+            updateUI();
+        }
+
+        let cachedStory = '';
+        
+        async function preCallAISentence(chengyu) {
+            if (gameState.aiMode !== 'story') return;
+            
+            const inspiration = document.getElementById('gameInspiration')?.value || gameState.inspiration;
+            const styleKeywords = {
+                '可爱': ['小', '猫', '宝宝', '熊', '兔', '孩', '儿童', '学生', '小朋友', '萌'],
+                '古雅': ['李', '白', '杜', '苏', '诗', '古', '文人', '先生', '夫子'],
+                '蛮横': ['张飞', '李逵', '鲁智深', '武松', '猛', '粗'],
+                '商务': ['老板', '客户', '会议', '合同', '项目', '经理', '公司'],
+                '温情': ['妈妈', '爸爸', '爷爷', '奶奶', '家人', '朋友', '亲人', '爱'],
+                '浪漫': ['爱情', '恋人', '男友', '女友', '约会', '对象']
+            };
+            
+            let style = '温馨';
+            for (const [s, keywords] of Object.entries(styleKeywords)) {
+                if (keywords.some(k => inspiration.includes(k))) {
+                    style = s;
+                    break;
+                }
+            }
+            
+            const styleWords = {
+                '可爱': '可爱温馨',
+                '古雅': '古雅诗意',
+                '蛮横': '豪爽直率',
+                '商务': '专业干练',
+                '温情': '温暖感人',
+                '浪漫': '甜蜜浪漫'
+            };
+            
+            const prompt = `用成语"${chengyu}"和灵感"${inspiration}"造一个20字以内${styleWords[style]}的句子，直接输出，不要任何解析。
+            
+            try {
+                const response = await fetch(DOUBAO_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DOUBAO_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'doubao-seed-1-6-flash-250828',
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.65,
+                        max_tokens: 200
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    cachedStory = data.choices[0].message.content.trim();
+                } else {
+                    cachedStory = '(AI创作失败)';
+                }
+            } catch (e) {
+                console.error('[ERROR] preCallAISentence:', e);
+                cachedStory = '(AI创作失败)';
+            }
+        }
+
+        async function callAISentence(chengyu) {
+            const resultText = document.getElementById('resultText');
+            const aiMode = gameState.aiMode;
+            const inspiration = document.getElementById('gameInspiration')?.value || gameState.inspiration;
+            
+            if (aiMode === 'sentence') {
+                const sentences = exampleSentences[chengyu] || ['（暂无造句）'];
+                const randomSentence = sentences[Math.floor(Math.random() * sentences.length)];
+                resultText.innerHTML += `<br><br><strong>造句：</strong>${randomSentence}`;
+                gameState.stories.push({ chengyu, content: randomSentence });
+                return;
+            }
+            
+            if (cachedStory) {
+                resultText.innerHTML += `<br><br><strong>故事：</strong>${cachedStory}`;
+                gameState.stories.push({ chengyu, content: cachedStory });
+                cachedStory = '';
+                return;
+            }
+            
+            const loadingHtml = `<br><br><em>小羽创作中...</em>`;
+            resultText.innerHTML += loadingHtml;
+            
+            try {
+                const styleKeywords = {
+                '可爱': ['小', '猫', '宝宝', '熊', '兔', '孩', '儿童', '学生', '小朋友', '萌'],
+                '古雅': ['李', '白', '杜', '苏', '诗', '古', '文人', '先生', '夫子'],
+                '蛮横': ['张飞', '李逵', '鲁智深', '武松', '猛', '粗'],
+                '商务': ['老板', '客户', '会议', '合同', '项目', '经理', '公司'],
+                '温情': ['妈妈', '爸爸', '爷爷', '奶奶', '家人', '朋友', '亲人', '爱'],
+                '浪漫': ['爱情', '恋人', '男友', '女友', '约会', '对象']
+            };
+            
+            let style = '温馨';
+            for (const [s, keywords] of Object.entries(styleKeywords)) {
+                if (keywords.some(k => inspiration.includes(k))) {
+                    style = s;
+                    break;
+                }
+            }
+            
+            const styleWords = {
+                '可爱': '可爱温馨',
+                '古雅': '古雅诗意',
+                '蛮横': '豪爽直率',
+                '商务': '专业干练',
+                '温情': '温暖感人',
+                '浪漫': '甜蜜浪漫'
+            };
+            
+            const prompt = `用成语"${chengyu}"和灵感"${inspiration}"造一个20字以内${styleWords[style]}的句子，直接输出内容，不要任何解析。`;
+                const response = await fetch(DOUBAO_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DOUBAO_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'doubao-seed-1-6-flash-250828',
+                        messages: [{ role: 'user', content: prompt }],
+                        temperature: 0.65,
+                        max_tokens: 200
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('[DEBUG] AI response:', data);
+                
+                let sentence = '';
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    sentence = data.choices[0].message.content.trim();
+                } else if (data.error) {
+                    sentence = '(AI失败: ' + data.error.message + ')';
+                } else {
+                    sentence = '(AI创作失败)';
+                }
+                
+                resultText.innerHTML += `<br><br><strong>故事：</strong>${sentence}`;
+            } catch (e) {
+                console.error('[ERROR] AI造句:', e);
+                resultText.innerHTML += `<br><br><em>AI创作失败</em>`;
+            }
+        }
+
+        function nextQuestion() {
+            try {
+                console.log('[DEBUG] nextQuestion:', gameState.currentIndex);
+                gameState.currentIndex++;
+                if (gameState.currentIndex >= gameState.totalQuestions) {
+                    showEndScreen();
+                } else {
+                    updateUI();
+                    showQuestion();
+                }
+            } catch (e) {
+                console.error('[ERROR] nextQuestion:', e);
+                alert('下一题失败: ' + e.message);
+            }
+        }
+
+        function updateUI() {
+            const progress = (gameState.currentIndex / gameState.totalQuestions) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+            document.getElementById('total').textContent = gameState.totalQuestions;
+            document.getElementById('score').textContent = gameState.score;
+        }
+
+        async function showEndScreen() {
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('endScreen').style.display = 'block';
+            document.getElementById('finalScore').textContent = gameState.score + '/' + gameState.totalQuestions;
+            
+            const percentage = (gameState.score / gameState.totalQuestions) * 100;
+            let msg = '';
+            if (percentage >= 90) msg = '太棒了！你是成语大师！🎉';
+            else if (percentage >= 70) msg = '很优秀！继续加油！👍';
+            else if (percentage >= 50) msg = '不错哦！再接再厉！💪';
+            else msg = '加油！多学多用成语！📚';
+            
+            console.log('[DEBUG] showEndScreen, aiMode:', gameState.aiMode, 'score:', gameState.score, 'stories:', gameState.stories.length);
+            if (gameState.aiMode === 'story' && gameState.score > 100) {
+                msg += '\n\n🏆 正在生成您的奖状...';
+                document.getElementById('finalMsg').textContent = msg;
+                
+                try {
+                    const storiesText = gameState.stories.map(s => `${s.chengyu}：${s.content}`).join('；');
+                    const awardPrompt = `把以下小故事改写成一段100字以内的连贯、通顺、有意境的话，其中必须包含所有成语：${storiesText}。不要删减成语，只调整顺序和连接词。`;
+                    
+                    const response = await fetch(DOUBAO_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${DOUBAO_API_KEY}`
+                        },
+                        body: JSON.stringify({
+                            model: 'doubao-seed-1-6-flash-250828',
+                            messages: [{ role: 'user', content: awardPrompt }],
+                            temperature: 0.65,
+                            max_tokens: 300
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.choices && data.choices[0] && data.choices[0].message) {
+                        const award = data.choices[0].message.content.trim();
+                        msg = `🏆 您的成语奖状：\n\n${award}\n\n${msg}`;
+                    }
+                } catch (e) {
+                    console.error('[ERROR] 生成奖状:', e);
+                }
+            }
+            
+            document.getElementById('finalMsg').textContent = msg;
+        }
+
+        function restartGame() {
+            document.getElementById('settings').style.display = 'block';
+            document.getElementById('endScreen').style.display = 'none';
+        }
+
+        function toggleVoice() {
+            if (!recognition) {
+                alert('语音识别不可用！\n\n要求：\n- 使用Chrome/Edge浏览器\n- 用localhost或HTTPS打开\n- 允许麦克风权限\n\n当前用file://打开无法使用语音，请用"文字输入"模式或在localhost运行。');
+                return;
+            }
+
+            if (gameState.isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        function startRecording() {
+            gameState.isRecording = true;
+            document.getElementById('voiceBtn').classList.add('recording');
+            document.getElementById('userInput').placeholder = '正在聆听...';
+            recognition.start();
+        }
+
+        function stopRecording() {
+            gameState.isRecording = false;
+            document.getElementById('voiceBtn').classList.remove('recording');
+            document.getElementById('userInput').placeholder = '点击麦克风说成语';
+        }
+
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        function switchGameMode() {
+            try {
+                const newMode = document.getElementById('gameMode').value;
+                console.log('[DEBUG] switchGameMode:', newMode);
+                gameState.playMode = newMode;
+                
+                document.getElementById('textInputArea').style.display = newMode !== 'select' ? 'block' : 'none';
+                document.getElementById('selectInputArea').style.display = newMode === 'select' ? 'block' : 'none';
+                document.getElementById('voiceBtn').style.display = newMode === 'voice' ? 'block' : 'none';
+                
+                if (newMode === 'voice') {
+                    document.getElementById('userInput').placeholder = '点击麦克风说成语';
+                } else if (newMode === 'text') {
+                    document.getElementById('userInput').placeholder = '请输入完整成语';
+                } else {
+                    document.getElementById('userInput').placeholder = '';
+                }
+                
+                const modeNames = { 'text': '文字模式', 'voice': '语音模式', 'select': '选字模式' };
+                document.getElementById('currentMode').textContent = modeNames[newMode] || '选字模式';
+                
+                if (newMode === 'select' && gameState.currentChengyu) {
+                    prepareSelectMode();
+                }
+                
+                document.getElementById('userInput').value = '';
+                console.log('[DEBUG] switchGameMode done');
+            } catch (e) {
+                console.error('[ERROR] switchGameMode:', e);
+                alert('切换模式失败: ' + e.message);
+            }
+        }
+
+        function switchChengyuType() {
+            try {
+                const newType = document.getElementById('chengyuType').value;
+                console.log('[DEBUG] switchChengyuType:', newType);
+                gameState.chengyuType = newType;
+                
+                let filteredData = chengyuData;
+                if (newType !== 'all') {
+                    filteredData = chengyuData.filter(item => item.type === newType);
+                }
+                
+                if (filteredData.length < 1) {
+                    alert('没有足够的' + newType + '成语！');
+                    return;
+                }
+                
+const newAnswers = shuffle(filteredData).slice(0, gameState.totalQuestions);
+                if (gameState.currentIndex < newAnswers.length) {
+                    gameState.answers = newAnswers;
+                } else {
+                    gameState.answers = newAnswers;
+                    gameState.currentIndex = 0;
+                }
+                
+                console.log('[DEBUG] New answers:', gameState.answers.map(a => a.chengyu));
+                
+                showQuestion();
+                console.log('[DEBUG] switchChengyuType done');
+            } catch (e) {
+                console.error('[ERROR] switchChengyuType:', e);
+                alert('切换成语类型失败: ' + e.message);
+            }
+        }
+
+        function switchHideCount() {
+            try {
+                const newCount = parseInt(document.getElementById('gameHideCount').value);
+                console.log('[DEBUG] switchHideCount:', newCount);
+                gameState.hideCount = newCount;
+                showQuestion();
+            } catch (e) {
+                console.error('[ERROR] switchHideCount:', e);
+            }
+        }
+
+        function switchDistractor() {
+            try {
+                const newCount = parseInt(document.getElementById('gameDistractor').value);
+                console.log('[DEBUG] switchDistractor:', newCount);
+                gameState.distractorCount = newCount;
+                if (gameState.playMode === 'select') {
+                    prepareSelectMode();
+                }
+            } catch (e) {
+                console.error('[ERROR] switchDistractor:', e);
+            }
+        }
+
+        function toggleAIInspiration() {
+            const mode = document.getElementById('aiMode').value;
+            document.getElementById('inspirationRow').style.display = mode === 'story' ? 'flex' : 'none';
+        }
+
+        function switchAIMode() {
+            try {
+                const mode = document.getElementById('gameAIMode').value;
+                gameState.aiMode = mode;
+                gameState.inspiration = document.getElementById('gameInspiration').value || '小花猫去春游';
+                document.getElementById('gameInspirationRow').style.display = mode === 'story' ? 'flex' : 'none';
+                console.log('[DEBUG] switchAIMode:', mode);
+                
+                if (mode === 'story' && gameState.currentChengyu) {
+                    cachedStory = '';
+                    preCallAISentence(gameState.currentChengyu);
+                }
+            } catch (e) {
+                console.error('[ERROR] switchAIMode:', e);
+            }
+        }
+    </script>
+</body>
+</html>

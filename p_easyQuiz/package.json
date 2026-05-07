@@ -1,0 +1,11 @@
+{
+  "name": "start-server",
+  "version": "1.0.0",
+  "description": "HTTP server for EasyQuiz",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "http-server": "^14.1.1"
+  }
+}

@@ -1,0 +1,64 @@
+<view class="container">
+  <view class="header">
+    <text class="title">小条记</text>
+    <text class="subtitle">记录每一天的灵感与想法</text>
+  </view>
+
+  <view wx:if="{{isLogin}}" class="user-info">
+    <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
+    <text class="nickname">{{userInfo.nickName}}</text>
+  </view>
+
+  <view wx:else class="login-section">
+    <button class="btn-primary login-btn" bindtap="getUserProfile">微信一键登录</button>
+    <text class="login-tip">登录后可记录小条和合成文章</text>
+  </view>
+
+  <view class="quick-actions">
+    <view class="action-item" bindtap="createNote">
+      <view class="action-icon">📝</view>
+      <text class="action-text">新建小条</text>
+    </view>
+    <view class="action-item" bindtap="composeArticle">
+      <view class="action-icon">📄</view>
+      <text class="action-text">合成文章</text>
+    </view>
+  </view>
+
+  <view wx:if="{{isLogin}}" class="list-section">
+    <view class="tab-header">
+      <view class="tab-item {{activeTab === 'notes' ? 'active' : ''}}" data-tab="notes" bindtap="switchTab">小条</view>
+      <view class="tab-item {{activeTab === 'articles' ? 'active' : ''}}" data-tab="articles" bindtap="switchTab">文章</view>
+    </view>
+
+    <view class="tab-content">
+      <view wx:if="{{activeTab === 'notes'}}" class="note-list">
+        <view class="list-item" wx:for="{{notes}}" wx:key="id" bindtap="goToNote" data-id="{{item.id}}">
+          <view class="item-content">
+            <text class="item-text">{{item.content}}</text>
+            <view class="item-meta">
+              <text class="item-category">{{item.category}}</text>
+              <text class="item-time">{{item.createdAt}}</text>
+            </view>
+          </view>
+          <view class="item-delete" catchtap="deleteNote" data-id="{{item.id}}">×</view>
+        </view>
+        <view wx:if="{{notes.length === 0}}" class="empty-tip">暂无小条</view>
+      </view>
+
+      <view wx:if="{{activeTab === 'articles'}}" class="article-list">
+        <view class="list-item" wx:for="{{articles}}" wx:key="id" bindtap="goToArticle" data-id="{{item.id}}">
+          <view class="item-content">
+            <text class="item-title">{{item.title}}</text>
+            <text class="item-text">{{item.content}}</text>
+            <view class="item-meta">
+              <text class="item-time">{{item.date}}</text>
+            </view>
+          </view>
+          <view class="item-delete" catchtap="deleteArticle" data-id="{{item.id}}">×</view>
+        </view>
+        <view wx:if="{{articles.length === 0}}" class="empty-tip">暂无文章</view>
+      </view>
+    </view>
+  </view>
+</view>
