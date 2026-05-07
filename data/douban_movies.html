@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>豆瓣观影记录 - 简单即效率</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { 
+            text-align: center; 
+            color: #fff; 
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle { 
+            text-align: center; 
+            color: rgba(255,255,255,0.9); 
+            margin-bottom: 30px;
+        }
+        .movie-list { 
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .movie-item { 
+            padding: 15px;
+            margin: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.3s;
+        }
+        .movie-item:hover { background: #f8f9fa; }
+        .movie-item:last-child { border-bottom: none; }
+        .movie-title { 
+            font-size: 15px; 
+            color: #333;
+            flex: 1;
+        }
+        .rating { display: flex; align-items: center; gap: 3px; }
+        .star { 
+            width: 18px; 
+            height: 18px; 
+            background: #ddd;
+            border-radius: 2px;
+            transition: background 0.3s;
+        }
+        .star.yellow { background: #ffb400; }
+        .star-value { 
+            margin-left: 8px; 
+            color: #666; 
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .no-rating { 
+            color: #999; 
+            font-size: 13px;
+            padding: 2px 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+        .count { 
+            text-align: center; 
+            color: #666; 
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 豆瓣观影记录</h1>
+        <p class="subtitle">用户：简单即效率 (203754450)</p>
+        
+        <div class="movie-list">
+            <!-- 示例数据 -->
+            <div class="movie-item">
+                <span class="movie-title">厉鬼将映</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star"></span><span class="star-value">4.0</span></div>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">JOJO的奇妙冒险 黄金之风</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star-value">5.0</span></div>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">JOJO的奇妙冒险 不灭钻石</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star-value">5.0</span></div>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">雪人往事</span>
+                <span class="no-rating">未评分</span>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">雪宝的冰雪大冒险</span>
+                <span class="no-rating">未评分</span>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">冰雪奇缘：生日惊喜</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star"></span><span class="star-value">4.0</span></div>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">冰雪奇缘</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star-value">5.0</span></div>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">JOJO的奇妙冒险 星尘斗士 埃及篇</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star-value">5.0</span></div>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">阳光普照</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star-value">5.0</span></div>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">生命树</span>
+                <span class="no-rating">未评分</span>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">JOJO的奇妙冒险 星尘斗士</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star-value">5.0</span></div>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">JOJO的奇妙冒险</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star-value">5.0</span></div>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">英雄本色</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star-value">5.0</span></div>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">黑狱断肠歌之砌生猪肉</span>
+                <span class="no-rating">未评分</span>
+            </div>
+            <div class="movie-item">
+                <span class="movie-title">马戏之王</span>
+                <div class="rating"><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star yellow"></span><span class="star"></span><span class="star-value">4.0</span></div>
+            </div>
+            <div class="count">共 819 部影视作品（仅展示前15条）</div>
+        </div>
+    </div>
+</body>
+</html>

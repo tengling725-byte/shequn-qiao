@@ -140,7 +140,7 @@ function normalizeQuestion(q, index) {
     options: options.map((opt, i) => ({
       id: opt.id !== undefined ? opt.id : i,
       text: opt.text || opt.content || opt || '',
-      isCorrect: Array.isArray(q.correctIndex) ? q.correctIndex.includes(i) : false
+      isCorrect: correctIndex.includes(i)
     })),
     explanation: q.explanation || q.explain || '',
     difficulty: q.difficulty || 1,

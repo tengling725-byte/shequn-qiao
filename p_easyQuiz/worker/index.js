@@ -9,50 +9,60 @@ export default {
     const path = url.pathname;
     const method = request.method;
 
+    const origin = request.headers.get('Origin') || '';
+    const allowedOrigins = (env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim().toLowerCase());
+    let isAllowed = allowedOrigins.includes('*');
+    
+    if (!isAllowed) {
+      const originLower = origin.toLowerCase();
+      isAllowed = allowedOrigins.some(o => {
+        if (o.startsWith('*.')) {
+          const suffix = o.slice(1);
+          return originLower.endsWith(suffix);
+        }
+        return o === originLower;
+      });
+    }
+    
+    const corsOrigin = isAllowed ? origin : '';
+    
     const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': corsOrigin,
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Credentials': 'true'
     };
 
     if (method === 'OPTIONS') {
       return new Response(null, { headers: corsHeaders });
     }
 
+    // 给 Response 添加 CORS 头的工具函数
+    const withCors = (response) => {
+      const corsResponse = new Response(response.body, response);
+      Object.entries(corsHeaders).forEach(([k, v]) => corsResponse.headers.set(k, v));
+      return corsResponse;
+    };
+
     try {
       if (path === '/api/auth/register' && method === 'POST') {
-        const response = await handleRegister(request, env);
-        const corsResponse = new Response(response.body, response);
-        Object.entries(corsHeaders).forEach(([k, v]) => corsResponse.headers.set(k, v));
-        return corsResponse;
+        return withCors(await handleRegister(request, env));
       }
 
       if (path === '/api/auth/login' && method === 'POST') {
-        const response = await handleLogin(request, env);
-        const corsResponse = new Response(response.body, response);
-        Object.entries(corsHeaders).forEach(([k, v]) => corsResponse.headers.set(k, v));
-        return corsResponse;
+        return withCors(await handleLogin(request, env));
       }
 
       if (path === '/api/auth/logout' && method === 'POST') {
-        const response = await handleLogout(request, env);
-        const corsResponse = new Response(response.body, response);
-        Object.entries(corsHeaders).forEach(([k, v]) => corsResponse.headers.set(k, v));
-        return corsResponse;
+        return withCors(await handleLogout(request, env));
       }
 
       if (path === '/api/auth/me' && method === 'GET') {
-        const response = await handleMe(request, env);
-        const corsResponse = new Response(response.body, response);
-        Object.entries(corsHeaders).forEach(([k, v]) => corsResponse.headers.set(k, v));
-        return corsResponse;
+        return withCors(await handleMe(request, env));
       }
 
       if (path === '/api/ai/parse' && method === 'POST') {
-        const response = await handleAIParse(request, env);
-        const corsResponse = new Response(response.body, response);
-        Object.entries(corsHeaders).forEach(([k, v]) => corsResponse.headers.set(k, v));
-        return corsResponse;
+        return withCors(await handleAIParse(request, env));
       }
 
       if (path === '/api/quizzes' && method === 'GET') {
@@ -202,7 +212,7 @@ export default {
         });
       }
 
-      return new Response('Not Found', { status: 404 });
+      return new Response('API Only. Use index.html for frontend.', { status: 200 });
     } catch (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,

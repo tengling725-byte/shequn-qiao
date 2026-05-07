@@ -15,8 +15,18 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-  let filePath = '.' + req.url;
-  if (filePath === './') filePath = './index.html';
+  // 安全解析 URL，防止路径遍历
+  let reqPath = new URL(req.url, 'http://localhost').pathname;
+  let filePath = path.normalize('.' + reqPath);
+
+  // 确保路径不超出项目目录
+  if (!filePath.startsWith('.' + path.sep)) {
+    res.writeHead(403);
+    res.end('Forbidden');
+    return;
+  }
+
+  if (reqPath === '/') filePath = './index.html';
 
   const ext = path.extname(filePath);
   const contentType = mimeTypes[ext] || 'text/plain';

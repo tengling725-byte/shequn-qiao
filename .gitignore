@@ -1,45 +1,45 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyc
-.pytest_cache/
+# ========== 依赖 ==========
+node_modules/
 .venv/
 venv/
-ENV/
-env/
+__pycache__/
 
-# Node
-node_modules/
-package-lock.json
-yarn.lock
-.npm/
+# ========== 构建输出 ==========
+dist/
+build/
+.next/
+out/
+coverage/
+.nyc_output/
 
-# 日志 / 临时文件
+# ========== 环境变量 ==========
+.env
+.env.*
+!.env.example
+
+# ========== 操作系统 ==========
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ========== 日志 ==========
 *.log
-temp/
-tmp/
-temp_download/
-downloads/
 
-# IDE
+# ========== IDE ==========
 .idea/
 .vscode/
 !.vscode/extensions.json
-.claude/
-.settings/
-*.swp
-*.swo
 
-# 数据库 / 数据
+# ========== 数据库 / 运行时文件 ==========
 *.db
 *.sqlite
 *.sqlite3
 data/
 database/
 
-# 文档 / 数据文件
-*.csv
+# ========== 文档（选择性提交，避免过大） ==========
 *.doc
 *.docx
 *.pdf
@@ -47,27 +47,29 @@ database/
 *.pptx
 *.xls
 *.xlsx
+*.csv
 *.txt
 
-# 压缩包 / 备份
+# ========== 临时/备份 ==========
 *.zip
 *.rar
 *.tar.gz
 backups/
 backup/
 
-# 操作系统
-.DS_Store
-Thumbs.db
-Desktop.ini
+# ===== Wrangler / Cloudflare 本地状态 =====
+.wrangler/
+wrangler/state/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3
 
-# 环境变量 / 私密配置
-.env
-.env.local
-.env.development
-.env.production
-config.json
-secret.json
+# ===== 本地临时代码目录 =====
+/temp_code/
+/test_temp/
+/temp_download/
 
-# 自定义本地目录（自己的）
-r_*/
+# ========== 自定义 ==========
+/r_*/
+

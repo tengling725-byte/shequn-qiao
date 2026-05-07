@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "*": "ask"
+  },
+  "instructions": [
+    "**/*.txt",
+    "**/*.log",
+    "**/*.csv",
+    "**/*.tsv",
+    "**/*.md",
+    "**/*.rst",
+    "**/*.pdf",
+    "**/*.doc",
+    "**/*.docx",
+    "**/*.pptx",
+    "**/*.xlsx"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm view *)",
+      "Bash(curl -s \"http://localhost:5173/src/App.vue\")",
+      "Bash(curl -s \"http://localhost:5173/src/App.vue?vue&type=style&index=0&lang.scss\")",
+      "Bash(curl -s \"http://localhost:5174/src/main.js\")",
+      "Bash(curl -s \"http://localhost:5174/src/App.vue\")",
+      "PowerShell(Start-Process \"http://localhost:5174/\")",
+      "Bash(curl -s \"http://localhost:5174/src/pages.json\")",
+      "Bash(curl -s \"http://localhost:5174/src/pages.json.js\")",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(npx uni *)",
+      "Bash(curl -s http://localhost:5199/src/main.js)",
+      "Bash(curl -s http://localhost:5199/src/pages-json-js)",
+      "Bash(curl -s \"http://localhost:5199/src/pages-json-js\")",
+      "Bash(curl -s \"http://localhost:5199/src/main.js\")",
+      "Bash(curl -s \"http://localhost:5199/src/manifest-json-js\")",
+      "Bash(curl -s \"http://localhost:5202/\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5173/)",
+      "Bash(curl -s \"http://localhost:5173/src/pages-json-js\")",
+      "Bash(start http://localhost:5173/)",
+      "Bash(curl -s \"http://localhost:5173/src/manifest-json-js\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr \"LISTENING\")",
+      "Bash(findstr \"517\")",
+      "Bash(taskkill /PID 33308 /PID 9676 /PID 12696 /PID 43048 /F)",
+      "PowerShell(Get-Process -Name \"node\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force -ErrorAction SilentlyContinue)",
+      "Bash(curl -s http://localhost:5173/src/main.js)",
+      "Bash(curl -s \"http://localhost:5173/src/pages/bank/list.vue\")",
+      "Bash(node -e \"try { new Function\\(require\\('fs'\\).readFileSync\\('C:/Workspace/opencode/p_easyQuiz/js/app.js','utf8'\\)\\); console.log\\('app.js 语法: OK'\\); } catch\\(e\\) { console.log\\('app.js 语法错误:', e.message\\); }\")",
+      "Bash(node -e ' *)",
+      "Bash(python -c ' *)",
+      "WebFetch(domain:localhost)",
+      "Bash(Get-ChildItem -Recurse -File -Name \"C:\\\\Workspace\\\\opencode\\\\p_easyQuiz\")",
+      "Bash(Select-Object -First 50)",
+      "PowerShell(Get-ChildItem -Recurse -File \"C:\\\\Workspace\\\\opencode\\\\p_easyQuiz\" | ForEach-Object { $_.FullName })",
+      "Bash(Get-ChildItem -Path \"C:\\\\Workspace\\\\opencode\\\\p_easyQuiz\" -Recurse)",
+      "Bash(npx wrangler *)"
+    ]
+  }
+}

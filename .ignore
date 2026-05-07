@@ -1,0 +1,18 @@
+# 允许搜索所有 .txt 和 .md 文档
+!**/*.txt
+!**/*.md
+
+# 允许搜索其他文档格式
+!**/*.csv
+!**/*.pdf
+!**/*.docx
+!**/*.pptx
+!**/*.xlsx
+
+# 如果有特定的文件夹被 .gitignore 忽略了，但你想让 AI 搜索它们
+!docs/
+!/r_*/
+!dat
+!/temp_code/
+!/test_temp/
+!/temp_download/

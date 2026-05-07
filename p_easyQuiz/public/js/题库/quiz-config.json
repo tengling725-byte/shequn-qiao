@@ -1,0 +1,6 @@
+[
+  { "name": "JS基础(kimi)", "file": "quiz-kimi.json", "questions": 30 },
+  { "name": "JS基础(元宝)", "file": "quiz-yuanbao.json", "questions": 10 },
+  { "name": "JS基础(deepseek)", "file": "quiz-deepseek.json", "questions": 20 },
+  { "name": "JS核心语法(豆包)", "file": "quiz-doubao.json", "questions": 15 }
+]
