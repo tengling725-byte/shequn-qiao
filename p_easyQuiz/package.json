@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "HTTP server for EasyQuiz",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
   }
 }

@@ -1,9 +1,9 @@
-export async function createUser(env, email, passwordHash) {
+export async function createUser(env, username, email, passwordHash) {
   const id = crypto.randomUUID();
   await env.DB.prepare(
-    'INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)'
-  ).bind(id, email, passwordHash).run();
-  return { id, email };
+    'INSERT INTO users (id, username, email, password_hash) VALUES (?, ?, ?, ?)'
+  ).bind(id, username, email, passwordHash).run();
+  return { id, username, email };
 }
 
 export async function getUserByEmail(env, email) {
@@ -18,11 +18,36 @@ export async function getUserById(env, userId) {
   ).bind(userId).first();
 }
 
+function computeHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + ch;
+    hash |= 0;
+  }
+  return hash.toString(16);
+}
+
 export async function getUserQuizzes(env, userId) {
   const results = await env.DB.prepare(
-    'SELECT id, name, created_at FROM quizzes WHERE user_id = ? ORDER BY created_at DESC'
+    'SELECT id, name, data, created_at FROM quizzes WHERE user_id = ? ORDER BY created_at DESC'
   ).bind(userId).all();
-  return results.results;
+  return results.results.map(q => {
+    let questionCount = 0;
+    let contentHash = '';
+    try {
+      const parsed = JSON.parse(q.data);
+      questionCount = parsed.questions ? parsed.questions.length : 0;
+      contentHash = computeHash(JSON.stringify(parsed.questions));
+    } catch (e) {}
+    return {
+      id: q.id,
+      name: q.name,
+      question_count: questionCount,
+      content_hash: contentHash,
+      created_at: q.created_at
+    };
+  });
 }
 
 export async function getQuizById(env, quizId, userId) {

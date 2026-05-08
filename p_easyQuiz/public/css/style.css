@@ -248,11 +248,12 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
+  overflow: hidden;
 }
 
 /* 不同题型样式 */
 .option.single {
-  border-radius: 50px;  /* 单选：胶囊形状 */
+  border-radius: 12px;
 }
 
 .option.multiple {
@@ -283,6 +284,9 @@ h1 {
 
 .option span {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .option:hover:not(:disabled) {

@@ -4,29 +4,43 @@ import { createUser, getUserByEmail, getUserById } from './db.js';
 
 export async function handleRegister(request, env) {
   try {
-    const { email, password } = await request.json();
-    
-    if (!email || !password) {
-      return new Response(JSON.stringify({ error: '邮箱和密码不能为空' }), {
+    const { username, email, password, confirmPassword } = await request.json();
+
+    if (!username || !email || !password || !confirmPassword) {
+      return new Response(JSON.stringify({ error: '所有字段不能为空' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
+
+    if (username.length < 2) {
+      return new Response(JSON.stringify({ error: '用户名至少2个字符' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     if (!email.includes('@')) {
       return new Response(JSON.stringify({ error: '请输入有效的邮箱地址' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
+
     if (password.length < 6) {
       return new Response(JSON.stringify({ error: '密码至少6位' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
+
+    if (password !== confirmPassword) {
+      return new Response(JSON.stringify({ error: '两次密码不一致' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const existing = await getUserByEmail(env, email);
     if (existing) {
       return new Response(JSON.stringify({ error: '该邮箱已被注册' }), {
@@ -34,17 +48,17 @@ export async function handleRegister(request, env) {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-    
+
     const passwordHash = await hashPassword(password);
-    const user = await createUser(env, email, passwordHash);
+    const user = await createUser(env, username, email, passwordHash);
     const session = await createSession(env, user.id);
-    
-    return new Response(JSON.stringify({ 
+
+    return new Response(JSON.stringify({
       success: true,
-      user: { id: user.id, email: user.email }
+      user: { id: user.id, username: user.username, email: user.email }
     }), {
       status: 201,
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Set-Cookie': setSessionCookie(session.sessionId, session.expiresAt)
       }
@@ -88,7 +102,7 @@ export async function handleLogin(request, env) {
     
     return new Response(JSON.stringify({
       success: true,
-      user: { id: user.id, email: user.email }
+      user: { id: user.id, username: user.username, email: user.email }
     }), {
       status: 200,
       headers: {
@@ -137,7 +151,7 @@ export async function handleMe(request, env) {
   }
   
   return new Response(JSON.stringify({
-    user: { id: session.user_id, email: session.email }
+    user: { id: session.user_id, username: session.username, email: session.email }
   }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' }

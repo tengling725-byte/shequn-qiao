@@ -1,5 +1,21 @@
 let builtInQuizzes = [];
 
+const escapeHtml = (str) => {
+  if (!str) return str;
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+};
+
+const hashContent = (data) => {
+  const str = JSON.stringify(data?.questions || data);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + ch;
+    hash |= 0;
+  }
+  return hash.toString(16);
+};
+
 const QuizApp = {
   state: {
     currentPage: 'home',
@@ -18,10 +34,52 @@ const QuizApp = {
     correctCount: 0,
     totalScore: 0,
     customQuizzes: [],
+    _importedHashes: new Set(),
     selectedQuizTitle: '',
     isLoggedIn: false,
     userEmail: '',
-    loginMode: 'login'
+    username: '',
+    redirectAfterLogin: null
+  },
+
+  // 最小 hash 路由：页面 ↔ hash 映射
+  HASH_MAP: { history: '#/history', errors: '#/errors', myQuizzes: '#/my-quizzes' },
+
+  parseHash() {
+    const h = location.hash;
+    if (h === '#/history') return 'history';
+    if (h === '#/my-quizzes') return 'myQuizzes';
+    if (h === '#/errors') return 'errors';
+    return null;
+  },
+
+  initHashRouting() {
+    const route = () => {
+      // 跳过由 navigate() 内部触发的 hash 变化
+      if (this._ignoreHash) { this._ignoreHash = false; return; }
+      const page = this.parseHash() || 'home';
+      if (page !== this.state.currentPage) {
+        if (['history', 'myQuizzes', 'errors'].includes(page)) {
+          this.requireLogin(page);
+        } else {
+          this.navigate(page);
+        }
+      }
+    };
+    addEventListener('hashchange', route);
+    route();
+  },
+
+  // 登录守卫：未登录跳转登录页，登录后回跳
+  requireLogin(page) {
+    if (!this.state.isLoggedIn) {
+      alert('请先登录后使用此功能');
+      this.state.redirectAfterLogin = page;
+      this.navigate('login');
+      return false;
+    }
+    this.navigate(page);
+    return true;
   },
 
   scoring: {
@@ -32,9 +90,27 @@ const QuizApp = {
   init() {
     this.state.currentQuiz = null;
     this.state.customQuizzes = this.loadCustomQuizzes();
+    // 用已有题库的哈希填充去重集合
+    this.state._importedHashes = new Set(
+      this.state.customQuizzes.map(q => q.hash || hashContent(q.data))
+    );
     window.QuizApp = this;
     this.loadBuiltInQuizzes();
-    this.checkLoginStatus();
+    this.checkLoginStatus().then(() => {
+      this.initHashRouting();
+    });
+    // 监听 401 未授权事件
+    addEventListener('unauthorized', () => {
+      const wasLoggedIn = this.state.isLoggedIn;
+      this.state.isLoggedIn = false;
+      this.state.userEmail = '';
+      this.state.username = '';
+      this.state.redirectAfterLogin = null;
+      // 仅当之前已登录、session 过期时才跳转登录页；初始未登录时不跳转
+      if (wasLoggedIn) {
+        this.navigate('login');
+      }
+    });
   },
 
   async loadBuiltInQuizzes() {
@@ -58,12 +134,56 @@ const QuizApp = {
 
   addCustomQuiz(quizData) {
     const name = quizData.title || '自定义题库';
+    const hash = hashContent(quizData);
+    // 哈希去重
+    if (this.state._importedHashes.has(hash)) {
+      alert('这个题库已经导入过了');
+      return false;
+    }
+    this.state._importedHashes.add(hash);
     this.state.customQuizzes.push({
       name: name,
       data: quizData,
-      questions: quizData.questions ? quizData.questions.length : 0
+      questions: quizData.questions ? quizData.questions.length : 0,
+      hash: hash
     });
     this.saveCustomQuizzes();
+    // 已登录时同步到云端
+    if (this.state.isLoggedIn) {
+      QuizStorage.saveCustom(name, quizData);
+    }
+  },
+
+  async syncCustomToCloud(index) {
+    const quiz = this.state.customQuizzes[index];
+    if (!quiz) return;
+
+    const localHash = quiz.hash || hashContent(quiz.data);
+
+    try {
+      const cloudQuizzes = await API.getQuizzes();
+      const dupe = (cloudQuizzes.quizzes || []).find(q => q.content_hash === localHash);
+      if (dupe) {
+        alert('已在库中');
+        quiz.cloudId = dupe.id;
+        quiz.hash = localHash;
+        this.saveCustomQuizzes();
+        this.render();
+        return;
+      }
+    } catch (e) { /* 查询失败继续上传 */ }
+
+    try {
+      const result = await API.saveQuiz(quiz.name, quiz.data, localHash);
+      if (result && result.quiz) {
+        quiz.cloudId = result.quiz.id;
+        quiz.hash = localHash;
+        this.saveCustomQuizzes();
+        this.render();
+      }
+    } catch (e) {
+      alert('上传失败: ' + (e.message || '网络错误'));
+    }
   },
 
   deleteCustomQuiz(index) {
@@ -82,12 +202,54 @@ const QuizApp = {
     }
   },
 
+  async startCloudQuiz(quizId) {
+    this.showLoading('加载题库...');
+    try {
+      const data = await API.getQuiz(quizId);
+      if (data && data.quiz && data.quiz.data) {
+        this.selectQuiz(data.quiz.data);
+      } else {
+        alert('加载题库失败');
+      }
+    } catch (e) {
+      alert('加载题库失败: ' + (e.message || '网络错误'));
+    }
+    this.hideLoading();
+  },
+
+  startLocalQuiz(index) {
+    const custom = this.state.customQuizzes[index];
+    if (custom && custom.data) {
+      this.selectQuiz(custom.data);
+    }
+  },
+
+  async deleteCloudQuiz(quizId) {
+    if (!confirm('确定删除这个题库？')) return;
+    try {
+      await API.deleteQuiz(quizId);
+      this.navigate('myQuizzes');
+    } catch (e) {
+      alert('删除失败: ' + (e.message || '网络错误'));
+    }
+  },
+
   navigate(page) {
     this.state.currentPage = page;
+    // 标记内部导航，防止 href="#" 触发的 hashchange 覆盖当前页面
+    this._ignoreHash = true;
+    if (this.HASH_MAP[page]) {
+      location.hash = this.HASH_MAP[page];
+    } else if (page === 'home') {
+      history.replaceState(null, '', location.pathname);
+    }
     this.render();
   },
 
   selectQuiz(quizData) {
+    // 规范化：将 JSON 的 isCorrect 格式统一转换为 correctAnswerIds 格式
+    const parser = new TagBasedParser();
+    quizData.questions = quizData.questions.map((q, i) => parser.normalizeQuestion(q, i));
     this.state.currentQuiz = quizData;
     this.state.questions = quizData.questions;
     this.navigate('setup');
@@ -109,16 +271,19 @@ const QuizApp = {
       return;
     }
 
-    const needShuffle = (options) => {
-      for (const opt of options) {
+    const needShuffle = (q) => {
+      // 解析含"选项"关键字 → 不洗牌
+      if (q.explanation && q.explanation.includes('选项')) return false;
+      for (const opt of q.options) {
         const text = opt.text || '';
-        if (text.includes('都对') || text.includes('都是') || text.includes('全对') || text.includes('以上都是')) {
+        if (/都对|都不对|都错|全对|全错|以上都对|以上都错|均对|均错|均不对|以上都是/.test(text)) {
           return false;
         }
       }
       return true;
     };
 
+    const parser = new TagBasedParser();
     const totalQuestions = this.state.currentQuiz.questions.length;
     const count = Math.min(this.state.questionCount, totalQuestions);
 
@@ -126,13 +291,10 @@ const QuizApp = {
       .sort(() => Math.random() - 0.5)
       .slice(0, count)
       .map(q => {
-        const shouldShuffle = needShuffle(q.options);
-        return {
-          ...q,
-          options: shouldShuffle 
-            ? [...q.options].sort(() => Math.random() - 0.5)
-            : [...q.options]
-        };
+        if (needShuffle(q)) {
+          return parser.shuffleOptions(q);
+        }
+        return q;
       });
 
     this.state.shuffledQuestions = shuffled;
@@ -169,31 +331,43 @@ const QuizApp = {
   },
 
   toggleAnswer(optionId) {
+    const q = this.state.shuffledQuestions[this.state.currentIndex];
     if (this.state.mode === 'game' && this.state.hasAnswered) return;
 
     const current = this.state.userAnswers[this.state.currentIndex] || [];
     const idx = current.indexOf(optionId);
-    
+
     if (idx >= 0) {
       current.splice(idx, 1);
     } else {
       current.push(optionId);
     }
-    
-    this.state.userAnswers[this.state.currentIndex] = current;
-    this.state.hasAnswered = current.length > 0;
 
-    if (this.state.mode === 'game' && current.length > 0) {
-      this.calculateMultiScore(current);
+    this.state.userAnswers[this.state.currentIndex] = current;
+
+    // 游戏模式：等待"确定"按钮，不立即判分
+    // 考试模式：勾选即生效
+    if (this.state.mode !== 'game') {
+      this.state.hasAnswered = current.length > 0;
     }
 
+    this.render();
+  },
+
+  confirmMultiAnswer() {
+    const q = this.state.shuffledQuestions[this.state.currentIndex];
+    const current = this.state.userAnswers[this.state.currentIndex] || [];
+    this.state.hasAnswered = true;
+    if (current.length > 0) {
+      this.calculateMultiScore(current);
+    }
     this.render();
   },
 
   calculateScore(optionId) {
     const q = this.state.shuffledQuestions[this.state.currentIndex];
     const selectedOpt = q.options.find(opt => opt.id === optionId);
-    const isCorrect = selectedOpt && selectedOpt.isCorrect;
+    const isCorrect = selectedOpt && q.correctAnswerIds.includes(selectedOpt.id);
     const timeUsed = (Date.now() - this.state.answerTime) / 1000;
 
     let points = 0;
@@ -215,9 +389,8 @@ const QuizApp = {
 
   calculateMultiScore(answerIds) {
     const q = this.state.shuffledQuestions[this.state.currentIndex];
-    const correctIds = q.options.filter(o => o.isCorrect).map(o => o.id);
-    const isCorrect = answerIds.length === correctIds.length && 
-                     answerIds.every(id => correctIds.includes(id));
+    const correctIds = q.correctAnswerIds || [];
+    const isCorrect = [...answerIds].sort().join(',') === [...correctIds].sort().join(',');
     const timeUsed = (Date.now() - this.state.answerTime) / 1000;
 
     let points = 0;
@@ -268,15 +441,14 @@ const QuizApp = {
       
       if (q.type === 'multiple') {
         const answerIds = userAnswers[i] || [];
-        const correctIds = q.options.filter(o => o.isCorrect).map(o => o.id);
-        isCorrect = answerIds.length > 0 && 
-                   answerIds.every(id => correctIds.includes(id)) && 
-                   correctIds.every(id => answerIds.includes(id));
+        const correctIds = q.correctAnswerIds || [];
+        isCorrect = answerIds.length > 0 &&
+                   [...answerIds].sort().join(',') === [...correctIds].sort().join(',');
       } else {
         const answer = userAnswers[i];
         if (answer !== undefined) {
           const selectedOpt = q.options.find(opt => opt.id === answer);
-          isCorrect = selectedOpt && selectedOpt.isCorrect;
+          isCorrect = selectedOpt && q.correctAnswerIds.includes(selectedOpt.id);
         }
       }
 
@@ -291,7 +463,9 @@ const QuizApp = {
 
       const answer = userAnswers[i];
       if (answer !== undefined) {
-        QuizStorage.addErrors(q, Array.isArray(answer) ? answer.join(',') : answer, isCorrect);
+        const answerStr = Array.isArray(answer) ? answer.join(',') : String(answer);
+        const qWithAnswer = { ...q, userAnswer: answerStr };
+        QuizStorage.addErrors(qWithAnswer, answerStr, isCorrect);
       }
     });
 
@@ -325,15 +499,27 @@ const QuizApp = {
           that.showAIParserModal(data);
           return;
         }
-        const checkResult = QuizParser.checkQuizData(data, e.target.result, file.name);
-        if (checkResult) {
-          that.showAIParserModal(checkResult);
-          return;
+        const baseName = file.name.replace(/\.[^.]+$/, '');
+        // 多题库文件：分别添加（先于 checkQuizData，后者只认 data.questions）
+        if (data.banks) {
+          data.banks.forEach(bank => {
+            bank.title = `题库_${bank.title || baseName}_${that.getDateStr()}`;
+            that.addCustomQuiz(bank);
+          });
+          alert(`已添加 ${data.banks.length} 个题库`);
+        } else {
+          const checkResult = QuizParser.checkQuizData(data, e.target.result, file.name);
+          if (checkResult) {
+            that.showAIParserModal(checkResult);
+            return;
+          }
+          data.title = `题库_${data.title || baseName}_${that.getDateStr()}`;
+          that.addCustomQuiz(data);
+          alert('题库已添加：' + data.title);
         }
-        data.title = `题库_${file.name.replace(/\.[^.]+$/, '')}_${that.getDateStr()}`;
-        console.log(`导入${data.questions.length}题，名称为${data.title}`);
-        that.addCustomQuiz(data);
-        alert('题库已添加：' + data.title);
+        if (!that.state.isLoggedIn) {
+          alert('未登录，题库仅为暂存，建议登录');
+        }
         that.render();
       } catch (err) {
         that.showAIParserModal({
@@ -355,15 +541,26 @@ const QuizApp = {
         that.showAIParserModal(data);
         return;
       }
-      const checkResult = QuizParser.checkQuizData(data, content, 'input.txt');
-      if (checkResult) {
-        that.showAIParserModal(checkResult);
-        return;
+      // 多题库文件：分别添加（先于 checkQuizData，后者只认 data.questions）
+      if (data.banks) {
+        data.banks.forEach(bank => {
+          bank.title = `题库_${bank.title || '粘贴'}_${that.getDateStr()}`;
+          that.addCustomQuiz(bank);
+        });
+        alert(`已添加 ${data.banks.length} 个题库`);
+      } else {
+        const checkResult = QuizParser.checkQuizData(data, content, 'input.txt');
+        if (checkResult) {
+          that.showAIParserModal(checkResult);
+          return;
+        }
+        data.title = `题库_${data.title || '粘贴'}_${that.getDateStr()}`;
+        that.addCustomQuiz(data);
+        alert('题库已添加：' + data.title);
       }
-      data.title = `题库_粘贴_${that.getDateStr()}`;
-      console.log(`导入${data.questions.length}题，名称为${data.title}`);
-      that.addCustomQuiz(data);
-      alert('题库已添加：' + data.title);
+      if (!that.state.isLoggedIn) {
+        alert('未登录，题库仅为暂存，建议登录');
+      }
       that.render();
     } catch (err) {
       that.showAIParserModal({
@@ -438,7 +635,7 @@ const QuizApp = {
     if (loading) loading.style.display = 'none';
   },
 
-  render() {
+  async render() {
     const app = document.getElementById('app');
     if (!app) return;
 
@@ -455,11 +652,20 @@ const QuizApp = {
       case 'result':
         app.innerHTML = this.renderResult();
         break;
+      case 'myQuizzes':
+        app.innerHTML = await this.renderMyQuizzes();
+        break;
       case 'history':
-        app.innerHTML = this.renderHistory();
+        app.innerHTML = await this.renderHistory();
         break;
       case 'errors':
-        app.innerHTML = this.renderErrors();
+        app.innerHTML = await this.renderErrors();
+        break;
+      case 'login':
+        app.innerHTML = this.renderLogin();
+        break;
+      case 'register':
+        app.innerHTML = this.renderRegister();
         break;
     }
 
@@ -477,47 +683,61 @@ const QuizApp = {
 
     const customManageHtml = this.state.customQuizzes.length > 0
       ? '<div class="custom-quiz-list">' +
-        this.state.customQuizzes.map((q, i) =>
-          '<div class="custom-quiz-item">' +
+        this.state.customQuizzes.map((q, i) => {
+          let cloudBtn = '';
+          if (this.state.isLoggedIn) {
+            if (q.cloudId) {
+              cloudBtn = '<button class="btn-small" disabled>已在库中</button>';
+            } else {
+              cloudBtn = '<button class="btn-small btn-primary" onclick="QuizApp.syncCustomToCloud(' + i + ')">上传到我的题库</button>';
+            }
+          } else {
+            cloudBtn = '<button class="btn-small btn-primary" onclick="QuizApp.navigate(\'login\')">上传到我的题库</button>';
+          }
+          return '<div class="custom-quiz-item">' +
             '<span>' + q.name + ' (' + q.questions + '题)</span>' +
-            '<button class="btn-small" onclick="QuizApp.exportCustomQuiz(' + i + ')">导出</button>' +
-            '<button class="btn-small" onclick="QuizApp.deleteCustomQuiz(' + i + ')">删除</button>' +
-          '</div>'
-        ).join('') +
+            '<div class="quiz-item-actions">' +
+              '<button class="btn-small" onclick="QuizApp.exportCustomQuiz(' + i + ')">导出</button>' +
+              cloudBtn +
+              '<button class="btn-small" onclick="QuizApp.deleteCustomQuiz(' + i + ')">删除</button>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
         '<button class="btn-text" onclick="QuizApp.clearCustomQuizzes()">清空自定义题库</button>' +
         '</div>'
       : '';
 
     const authHtml = this.state.isLoggedIn
-      ? '<div class="user-info"><span>' + this.state.userEmail + '</span><button class="btn-text" onclick="QuizApp.handleLogout()">登出</button></div>'
-      : '<button class="btn btn-outline" onclick="QuizApp.showLoginModal()">登录</button>';
+      ? '<div class="user-info"><span>' + this.state.username + ' (' + this.state.userEmail + ')</span><button class="btn-text" onclick="QuizApp.handleLogout()">登出</button></div>'
+      : '<div class="auth-links"><a href="#" data-testid="login-link" onclick="QuizApp.navigate(\'login\')">登录</a> | <a href="#" data-testid="register-link" onclick="QuizApp.navigate(\'register\')">注册</a></div>';
 
     return '<div class="page home">' +
       '<h1>EasyQuiz</h1>' +
       '<p class="subtitle">选择题库开始答题</p>' +
       '<div class="quiz-list">' +
-        '<select id="quizSelect" class="quiz-select" onchange="QuizApp.onQuizSelect()">' +
+        '<select id="quizSelect" data-testid="quiz-select" class="quiz-select" onchange="QuizApp.onQuizSelect()">' +
           '<option value="">-- 请选择题库 --</option>' +
           '<optgroup label="内置题库">' + builtOptions + '</optgroup>' +
           (customOptions ? '<optgroup label="自定义题库">' + customOptions + '</optgroup>' : '') +
         '</select>' +
-        '<button class="btn btn-primary" onclick="QuizApp.startSelectedQuiz()">开始答题</button>' +
-        '<button class="btn btn-outline" onclick="document.getElementById(\'fileInput\').click()">上传题库</button>' +
-        '<input type="file" id="fileInput" accept=".json,.txt,.md" style="display:none">' +
-        '<button class="btn btn-outline" onclick="QuizApp.showPasteModal()">粘贴题库</button>' +
+        '<button class="btn btn-primary" data-testid="start-quiz" onclick="QuizApp.startSelectedQuiz()">开始答题</button>' +
+        '<button class="btn btn-outline" data-testid="upload-btn" onclick="document.getElementById(\'fileInput\').click()">上传题库</button>' +
+        '<input type="file" id="fileInput" data-testid="file-input" accept=".json,.txt,.md" style="display:none">' +
+        '<button class="btn btn-outline" data-testid="paste-btn" onclick="QuizApp.showPasteModal()">粘贴题库</button>' +
       '</div>' +
       customManageHtml +
       '<div class="nav-links">' +
-        '<a href="#" onclick="QuizApp.navigate(\'history\')">历史记录</a>' +
-        '<a href="#" onclick="QuizApp.navigate(\'errors\')">错题复习</a>' +
+        '<a href="#/my-quizzes" onclick="return QuizApp.requireLogin(\'myQuizzes\')">我的题库</a>' +
+        '<a href="#/history" onclick="return QuizApp.requireLogin(\'history\')">历史记录</a>' +
+        '<a href="#/errors" onclick="return QuizApp.requireLogin(\'errors\')">错题复习</a>' +
       '</div>' +
       authHtml +
       '<div id="pasteModal" class="modal" style="display:none">' +
         '<div class="modal-content">' +
           '<h3>粘贴题库内容</h3>' +
-          '<textarea id="pasteContent" placeholder="粘贴 JSON/TXT/MD 格式的题库内容"></textarea>' +
+          '<textarea id="pasteContent" data-testid="paste-textarea" placeholder="粘贴 JSON/TXT/MD 格式的题库内容"></textarea>' +
           '<div class="modal-buttons">' +
-            '<button class="btn btn-primary" onclick="QuizApp.submitPaste()">确认</button>' +
+            '<button class="btn btn-primary" data-testid="paste-submit" onclick="QuizApp.submitPaste()">确认</button>' +
             '<button class="btn btn-outline" onclick="document.getElementById(\'pasteModal\').style.display=\'none\'">取消</button>' +
           '</div>' +
         '</div>' +
@@ -533,17 +753,6 @@ const QuizApp = {
           '</div>' +
         '</div>' +
       '</div>' +
-      '<div id="loginModal" class="modal" style="display:none">' +
-        '<div class="modal-content">' +
-          '<h3>' + (this.state.loginMode === 'login' ? '登录' : '注册') + '</h3>' +
-          '<input type="email" id="loginEmail" placeholder="邮箱" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:4px;">' +
-          '<input type="password" id="loginPassword" placeholder="密码" style="width:100%;padding:10px;margin-bottom:15px;border:1px solid #ddd;border-radius:4px;">' +
-          '<div class="modal-buttons">' +
-            '<button class="btn btn-primary" onclick="QuizApp.handleLoginSubmit()">' + (this.state.loginMode === 'login' ? '登录' : '注册') + '</button>' +
-            '<button class="btn btn-outline" onclick="QuizApp.toggleLoginMode()">' + (this.state.loginMode === 'login' ? '切换到注册' : '切换到登录') + '</button>' +
-            '<button class="btn btn-outline" onclick="document.getElementById(\'loginModal\').style.display=\'none\'">取消</button>' +
-          '</div>' +
-        '</div>' +
       '</div>' +
     '</div>';
   },
@@ -570,11 +779,11 @@ const QuizApp = {
       '<div class="setting-group">' +
         '<label>模式</label>' +
         '<div class="btn-group">' +
-          '<button class="btn' + (this.state.mode === 'exam' ? ' active' : '') + '" onclick="QuizApp.setMode(\'exam\')">考试模式</button>' +
-          '<button class="btn' + (this.state.mode === 'game' ? ' active' : '') + '" onclick="QuizApp.setMode(\'game\')">游戏模式</button>' +
+          '<button class="btn' + (this.state.mode === 'exam' ? ' active' : '') + '" data-testid="mode-exam" onclick="QuizApp.setMode(\'exam\')">考试模式</button>' +
+          '<button class="btn' + (this.state.mode === 'game' ? ' active' : '') + '" data-testid="mode-game" onclick="QuizApp.setMode(\'game\')">游戏模式</button>' +
         '</div>' +
       '</div>' +
-      '<button class="btn btn-primary btn-large" onclick="QuizApp.startQuiz()">开始答题</button>' +
+      '<button class="btn btn-primary btn-large" data-testid="start-btn" onclick="QuizApp.startQuiz()">开始答题</button>' +
       '<a href="#" class="back-link" onclick="QuizApp.navigate(\'home\')">返回</a>' +
     '</div>';
   },
@@ -587,25 +796,17 @@ const QuizApp = {
     const answered = userAnswers[currentIndex];
     const typeLabel = q.type === 'multiple' ? '（多选）' : q.type === 'true_false' ? '（判断）' : '（单选）';
     const typeClass = q.type === 'multiple' ? ' multiple' : q.type === 'true_false' ? ' true-false' : ' single';
-    
-    // 不同题型的前缀图标
-    const getPrefix = (type) => {
-      if (type === 'multiple') return '☑ ';
-      if (type === 'true_false') return '';
-      return '○ ';
-    };
-    const prefix = getPrefix(q.type);
 
     let optionsHtml = q.options.map(opt => {
       const isMulti = q.type === 'multiple';
       const selected = isMulti ? (answered || []).includes(opt.id) : answered === opt.id;
       let classes = 'option' + typeClass;
       if (selected) classes += ' selected';
-      if (mode === 'game' && answered !== undefined) {
-        if (opt.isCorrect) classes += ' correct';
+      if (mode === 'game' && this.state.hasAnswered) {
+        if (q.correctAnswerIds.includes(opt.id)) classes += ' correct';
         else if (selected) classes += ' wrong';
       }
-      return '<button type="button" class="' + classes + '" onclick="window.QuizApp.selectAnswer(' + opt.id + ')"><span>' + prefix + opt.text + '</span></button>';
+      return '<button type="button" class="' + classes + '" data-testid="option-' + opt.id + '" onclick="window.QuizApp.selectAnswer(' + opt.id + ')"><span>' + opt.code + '. ' + escapeHtml(opt.text) + '</span></button>';
     }).join('');
 
     // 多选时显示已选数量
@@ -615,20 +816,27 @@ const QuizApp = {
     }
 
     let feedbackHtml = '';
-    if (mode === 'game' && answered !== undefined) {
+    if (mode === 'game' && this.state.hasAnswered) {
       if (q.type === 'multiple') {
-        const correctIds = q.options.filter(o => o.isCorrect).map(o => o.id);
+        const correctIds = q.correctAnswerIds || [];
         const userIds = answered || [];
-        const allCorrect = userIds.length === correctIds.length && userIds.every(id => correctIds.includes(id));
+        const allCorrect = [...userIds].sort().join(',') === [...correctIds].sort().join(',');
         feedbackHtml = '<div class="feedback ' + (allCorrect ? 'correct' : 'wrong') + '">' + (allCorrect ? '✓ 回答正确' : '✗ 回答错误') + '</div>';
       } else {
         const opt = q.options.find(o => o.id === answered);
-        const isCorrect = opt && opt.isCorrect;
+        const isCorrect = opt && q.correctAnswerIds.includes(opt.id);
         feedbackHtml = '<div class="feedback ' + (isCorrect ? 'correct' : 'wrong') + '">' + (isCorrect ? '✓ 回答正确' : '✗ 回答错误') + '</div>';
       }
       if (q.explanation) {
-        feedbackHtml += '<div class="q-explanation">解析: ' + q.explanation + '</div>';
+        feedbackHtml += '<div class="q-explanation">解析: ' + escapeHtml(q.explanation) + '</div>';
       }
+    }
+
+    // 游戏模式下多选：须点"确定"后才能继续
+    const needConfirm = mode === 'game' && q.type === 'multiple' && !this.state.hasAnswered;
+    let confirmBtn = '';
+    if (needConfirm && answered && answered.length > 0) {
+      confirmBtn = '<button class="btn btn-primary btn-large" style="margin-bottom:16px;" onclick="window.QuizApp.confirmMultiAnswer()">确定</button>';
     }
 
     return '<div class="page quiz">' +
@@ -637,14 +845,15 @@ const QuizApp = {
         (mode === 'game' ? '<span class="score">得分: ' + this.state.score + '</span>' : '') +
       '</div>' +
       '<div class="question">' +
-        '<div class="question-content">' + q.content + '</div>' +
+        '<div class="question-content">' + escapeHtml(q.content) + '</div>' +
         '<div class="question-type">' + typeLabel + '</div>' +
       '</div>' +
       '<div class="options">' + optionsHtml + selectionInfo + '</div>' +
+      confirmBtn +
       feedbackHtml +
       '<div class="nav-buttons">' +
-        '<button class="btn btn-outline"' + (currentIndex === 0 ? ' disabled' : '') + ' onclick="window.QuizApp.prevQuestion()">上一题</button>' +
-        '<button class="btn btn-primary" onclick="window.QuizApp.nextQuestion()">' + (currentIndex === shuffledQuestions.length - 1 ? '提交' : '下一题') + '</button>' +
+        '<button class="btn btn-outline"' + (currentIndex === 0 ? ' disabled' : '') + ' data-testid="prev-btn" onclick="window.QuizApp.prevQuestion()">上一题</button>' +
+        '<button class="btn btn-primary" data-testid="next-btn"' + (needConfirm ? ' disabled' : '') + ' onclick="window.QuizApp.nextQuestion()">' + (currentIndex === shuffledQuestions.length - 1 ? '提交' : '下一题') + '</button>' +
       '</div>' +
     '</div>';
   },
@@ -661,28 +870,27 @@ const QuizApp = {
       
       if (q.type === 'multiple') {
         const answerIds = userAnswers[i] || [];
-        const correctIds = q.options.filter(o => o.isCorrect).map(o => o.id);
-        isCorrect = answerIds.length > 0 && 
-                  answerIds.every(id => correctIds.includes(id)) && 
-                  correctIds.every(id => answerIds.includes(id));
-        userAnswerText = answerIds.map(id => q.options.find(o => o.id === id)?.text).join('、') || '未作答';
-        correctAnswerText = q.options.filter(o => o.isCorrect).map(o => o.text).join('、');
+        const correctIds = q.correctAnswerIds || [];
+        isCorrect = answerIds.length > 0 &&
+                  [...answerIds].sort().join(',') === [...correctIds].sort().join(',');
+        userAnswerText = answerIds.map(id => q.options.find(o => o.id === id)?.code).join('、') || '未作答';
+        correctAnswerText = (q.correctAnswerIds || []).map(id => q.options.find(o => o.id === id)?.code).join('、');
       } else {
         const answer = userAnswers[i];
         const selectedOpt = q.options.find(opt => opt.id === answer);
-        isCorrect = selectedOpt && selectedOpt.isCorrect;
-        userAnswerText = selectedOpt?.text || '未作答';
-        correctAnswerText = q.options.find(opt => opt.isCorrect)?.text || '';
+        isCorrect = selectedOpt && q.correctAnswerIds.includes(selectedOpt.id);
+        userAnswerText = selectedOpt?.code || '未作答';
+        correctAnswerText = q.options.find(o => q.correctAnswerIds.includes(o.id))?.code || '';
       }
-      
-      // 构建选项显示
+
+      // 构建选项显示（带 code）
       const optionsText = q.options.map((opt, idx) => {
-        const prefix = opt.isCorrect ? '✓' : ' ';
-        const selected = q.type === 'multiple' 
+        const isAnswer = q.correctAnswerIds.includes(opt.id);
+        const selected = q.type === 'multiple'
           ? (userAnswers[i] || []).includes(opt.id)
           : userAnswers[i] === opt.id;
         const mark = selected ? '●' : '○';
-        return mark + ' ' + opt.text;
+        return mark + ' ' + opt.code + '. ' + escapeHtml(opt.text) + (isAnswer ? ' ✓' : '');
       }).join('\n');
 
       return '<div class="analysis-item ' + (isCorrect ? 'correct' : 'wrong') + '">' +
@@ -691,13 +899,13 @@ const QuizApp = {
           '<span class="q-status">' + (isCorrect ? '✓' : '✗') + '</span>' +
           '<span class="q-type">' + (q.type === 'multiple' ? '（多选）' : q.type === 'true_false' ? '（判断）' : '（单选）') + '</span>' +
         '</div>' +
-        '<div class="q-content">' + q.content + '</div>' +
+        '<div class="q-content">' + escapeHtml(q.content) + '</div>' +
         '<div class="q-options">' + optionsText + '</div>' +
         '<div class="q-answer">' +
           '你的答案: ' + userAnswerText +
           (!isCorrect ? ' | 正确答案: ' + correctAnswerText : '') +
         '</div>' +
-        (q.explanation ? '<div class="q-explanation">' + q.explanation.replace(/\n/g, '<br>') + '</div>' : '') +
+        (q.explanation ? '<div class="q-explanation">解析: ' + escapeHtml(q.explanation).replace(/\n/g, '<br>') + '</div>' : '') +
       '</div>';
     }).join('');
 
@@ -719,18 +927,18 @@ const QuizApp = {
     '</div>';
   },
 
-  renderHistory() {
-    const history = QuizStorage.getHistory();
+  async renderHistory() {
+    const history = await QuizStorage.getHistory();
 
-    let listHtml = history.map(r => {
+    let listHtml = (history || []).map(r => {
       return '<div class="history-item">' +
-        '<div class="history-title">' + r.quizTitle + '</div>' +
+        '<div class="history-title">' + r.quiz_title + '</div>' +
         '<div class="history-meta">' +
           '<span class="mode">' + (r.mode === 'exam' ? '考试' : '游戏') + '</span>' +
           '<span class="score">' + r.score + '分</span>' +
           '<span class="correct">' + r.correct + '/' + r.total + '</span>' +
         '</div>' +
-        '<div class="history-time">' + new Date(r.timestamp).toLocaleString() + '</div>' +
+        '<div class="history-time">' + new Date(r.created_at).toLocaleString() + '</div>' +
       '</div>';
     }).join('');
 
@@ -741,23 +949,80 @@ const QuizApp = {
     '</div>';
   },
 
-  renderErrors() {
-    const errors = QuizStorage.getErrors();
+  async renderErrors() {
+    const errors = await QuizStorage.getErrors();
 
-    let listHtml = errors.map((q, i) => {
-      return '<div class="error-item">' +
-        '<div class="error-number">' + (i + 1) + '</div>' +
-        '<div class="error-content">' + q.content + '</div>' +
-        '<div class="error-answer">正确答案: ' + q.options.find(opt => opt.isCorrect)?.text + '</div>' +
-        (q.explanation ? '<div class="error-explanation">解析: ' + q.explanation + '</div>' : '') +
-        '<button class="btn-small" onclick="QuizStorage.removeError(\'' + q.id + '\'); QuizApp.navigate(\'errors\')">移除</button>' +
+    let listHtml = (errors || []).map((q, i) => {
+      // 构建选项显示（与答卷总结格式一致）
+      const optionsText = (q.options || []).map(opt => {
+        const isAnswer = (q.correctAnswerIds || []).includes(opt.id);
+        const userAnswered = q.userAnswer ? q.userAnswer.split(',').includes(String(opt.id)) : false;
+        const mark = userAnswered ? '●' : '○';
+        return mark + ' ' + (opt.code || '') + '. ' + escapeHtml(opt.text) + (isAnswer ? ' ✓' : '');
+      }).join('\n');
+
+      // 正确答案文本
+      const correctAnswerText = (q.correctAnswerIds || []).map(id => {
+        const opt = (q.options || []).find(o => o.id === id);
+        return opt ? (opt.code || opt.text) : '';
+      }).filter(Boolean).join('、');
+
+      // 用户答案文本
+      const userAnswerText = q.userAnswer ? q.userAnswer.split(',').map(id => {
+        const opt = (q.options || []).find(o => o.id === parseInt(id));
+        return opt ? (opt.code || opt.text) : id;
+      }).join('、') : '';
+
+      return '<div class="analysis-item wrong">' +
+        '<div class="analysis-header">' +
+          '<span class="q-number">' + (i + 1) + '</span>' +
+          '<span class="q-status">✗</span>' +
+          '<span class="q-type">' + (q.type === 'multiple' ? '（多选）' : q.type === 'true_false' ? '（判断）' : '（单选）') + '</span>' +
+        '</div>' +
+        '<div class="q-content">' + escapeHtml(q.content) + '</div>' +
+        '<div class="q-options">' + optionsText + '</div>' +
+        '<div class="q-answer">' +
+          (userAnswerText ? '你的答案: ' + userAnswerText + ' | ' : '') + '正确答案: ' + correctAnswerText +
+        '</div>' +
+        (q.explanation ? '<div class="q-explanation">解析: ' + escapeHtml(q.explanation).replace(/\n/g, '<br>') + '</div>' : '') +
+        '<button class="btn-small" style="margin-top:8px;" onclick="QuizStorage.removeError(\'' + (q.id || q.question_id || '') + '\'); QuizApp.navigate(\'errors\')">移除</button>' +
       '</div>';
     }).join('');
 
     return '<div class="page errors">' +
       '<h1>错题复习</h1>' +
-      (errors.length === 0 ? '<p class="empty">暂无错题</p>' : '<div class="error-list">' + listHtml + '</div>') +
+      (errors.length === 0 ? '<p class="empty">暂无错题</p>' : '<div class="analysis">' + listHtml + '</div>') +
       '<a href="#" class="back-link" onclick="QuizApp.navigate(\'home\')">返回</a>' +
+    '</div>';
+  },
+
+  async renderMyQuizzes() {
+    const quizzes = await QuizStorage.getCustom();
+    const emptyMsg = this.state.isLoggedIn
+      ? '暂无云端题库，上传题库即可同步到云端'
+      : '暂无本地题库，<a href="#" onclick="QuizApp.navigate(\'home\')">去上传</a>';
+
+    const listHtml = quizzes.length === 0
+      ? '<p class="empty">' + emptyMsg + '</p>'
+      : quizzes.map((q, i) => {
+          const count = q.question_count || q.data?.questions?.length || q.questions || 0;
+          const name = q.name || q.title || '未命名题库';
+          const startBtn = this.state.isLoggedIn
+            ? '<button class="btn-small btn-primary" onclick="QuizApp.startCloudQuiz(\'' + q.id + '\')">开始</button>'
+            : '<button class="btn-small btn-primary" onclick="QuizApp.startLocalQuiz(' + i + ')">开始</button>';
+          const delBtn = this.state.isLoggedIn
+            ? '<button class="btn-small" onclick="QuizApp.deleteCloudQuiz(\'' + q.id + '\')">删除</button>'
+            : '<button class="btn-small" onclick="QuizApp.deleteCustomQuiz(' + i + ')">删除</button>';
+          return '<div class="custom-quiz-item">' +
+            '<span>' + name + ' (' + count + '题)</span>' +
+            '<div class="quiz-item-actions">' + startBtn + delBtn + '</div>' +
+          '</div>';
+        }).join('');
+
+    return '<div class="page my-quizzes">' +
+      '<h1>我的题库</h1>' +
+      listHtml +
+      '<a href="#" class="back-link" onclick="QuizApp.navigate(\'home\')">返回首页</a>' +
     '</div>';
   },
 
@@ -818,15 +1083,32 @@ const QuizApp = {
     }
   },
 
-  showLoginModal() {
-    const modal = document.getElementById('loginModal');
-    if (modal) modal.style.display = 'flex';
+  renderLogin() {
+    return '<div class="page">' +
+      '<h1>登录</h1>' +
+      '<div class="auth-form">' +
+        '<input type="email" id="loginEmail" placeholder="邮箱" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:4px;">' +
+        '<input type="password" id="loginPassword" placeholder="密码" style="width:100%;padding:10px;margin-bottom:15px;border:1px solid #ddd;border-radius:4px;">' +
+        '<button class="btn btn-primary" onclick="QuizApp.handleLoginSubmit()" style="width:100%;margin-bottom:10px;">登录</button>' +
+        '<p style="text-align:center;">还没有账号？<a href="javascript:void(0)" onclick="QuizApp.navigate(\'register\')">去注册</a></p>' +
+      '</div>' +
+      '<a href="#" class="back-link" onclick="QuizApp.navigate(\'home\')">返回首页</a>' +
+    '</div>';
   },
 
-  toggleLoginMode() {
-    this.state.loginMode = this.state.loginMode === 'login' ? 'register' : 'login';
-    this.render();
-    this.showLoginModal();
+  renderRegister() {
+    return '<div class="page">' +
+      '<h1>注册</h1>' +
+      '<div class="auth-form">' +
+        '<input type="text" id="regUsername" placeholder="用户名" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:4px;">' +
+        '<input type="email" id="regEmail" placeholder="邮箱" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:4px;">' +
+        '<input type="password" id="regPassword" placeholder="密码（至少6位）" style="width:100%;padding:10px;margin-bottom:10px;border:1px solid #ddd;border-radius:4px;">' +
+        '<input type="password" id="regConfirmPassword" placeholder="确认密码" style="width:100%;padding:10px;margin-bottom:15px;border:1px solid #ddd;border-radius:4px;">' +
+        '<button class="btn btn-primary" onclick="QuizApp.handleRegisterSubmit()" style="width:100%;margin-bottom:10px;">注册</button>' +
+        '<p style="text-align:center;">已有账号？<a href="#" onclick="QuizApp.navigate(\'login\')">去登录</a></p>' +
+      '</div>' +
+      '<a href="#" class="back-link" onclick="QuizApp.navigate(\'home\')">返回首页</a>' +
+    '</div>';
   },
 
   async handleLoginSubmit() {
@@ -838,27 +1120,98 @@ const QuizApp = {
       return;
     }
 
-    this.showLoading(this.state.loginMode === 'login' ? '登录中...' : '注册中...');
+    this.showLoading('登录中...');
 
     try {
-      if (this.state.loginMode === 'login') {
-        const user = await Auth.login(email, password);
-        this.state.isLoggedIn = true;
-        this.state.userEmail = user.email;
-        alert('登录成功');
-      } else {
-        const user = await Auth.register(email, password);
-        this.state.isLoggedIn = true;
-        this.state.userEmail = user.email;
-        alert('注册成功');
-      }
-      const modal = document.getElementById('loginModal');
-      if (modal) modal.style.display = 'none';
-      this.render();
-    } catch (err) {
-      alert(err.message || (this.state.loginMode === 'login' ? '登录失败' : '注册失败'));
-    } finally {
+      const user = await Auth.login(email, password);
+      this.state.isLoggedIn = true;
+      this.state.userEmail = user.email;
+      this.state.username = user.username || '';
       this.hideLoading();
+
+      // 检查本地临时记录
+      await this.syncLocalToCloud();
+
+      // 登录成功后回跳到目标页面
+      if (this.state.redirectAfterLogin) {
+        const target = this.state.redirectAfterLogin;
+        this.state.redirectAfterLogin = null;
+        this.navigate(target);
+      } else {
+        this.navigate('home');
+      }
+    } catch (err) {
+      this.hideLoading();
+      alert(err.message || '登录失败');
+    }
+  },
+
+  async syncLocalToCloud() {
+    // 检查本地是否有临时记录
+    const localCustom = JSON.parse(localStorage.getItem('quiz_custom') || '[]');
+    const localErrors = JSON.parse(localStorage.getItem('quiz_errors') || '[]');
+    const localHistory = JSON.parse(localStorage.getItem('quiz_history') || '[]');
+    const hasLocal = localCustom.length > 0 || localErrors.length > 0 || localHistory.length > 0;
+
+    if (!hasLocal) return;
+
+    if (confirm('检测到本地临时记录（题库/错题/历史），是否加入云端以便未来访问？')) {
+      this.showLoading('同步中...');
+      // 同步题库
+      for (const item of localCustom) {
+        try { await QuizStorage.saveCustom(item.name, item.data); } catch (e) { /* skip */ }
+      }
+      // 同步错题
+      for (const item of localErrors) {
+        try { await QuizStorage.addErrors(item, '', false); } catch (e) { /* skip */ }
+      }
+      // 同步历史
+      for (const item of localHistory) {
+        try { await QuizStorage.addHistory(item); } catch (e) { /* skip */ }
+      }
+      this.hideLoading();
+    }
+    // 清除本地临时记录
+    localStorage.removeItem('quiz_custom');
+    localStorage.removeItem('quiz_errors');
+    localStorage.removeItem('quiz_history');
+    localStorage.removeItem('easyQuiz_custom');
+  },
+
+  async handleRegisterSubmit() {
+    const username = document.getElementById('regUsername').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+    if (!username || !email || !password || !confirmPassword) {
+      alert('所有字段不能为空');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert('两次密码不一致');
+      return;
+    }
+
+    this.showLoading('注册中...');
+
+    try {
+      const user = await Auth.register(username, email, password, confirmPassword);
+      this.state.isLoggedIn = true;
+      this.state.userEmail = user.email;
+      this.state.username = user.username || '';
+      this.hideLoading();
+      if (this.state.redirectAfterLogin) {
+        const target = this.state.redirectAfterLogin;
+        this.state.redirectAfterLogin = null;
+        this.navigate(target);
+      } else {
+        this.navigate('home');
+      }
+    } catch (err) {
+      this.hideLoading();
+      alert(err.message || '注册失败');
     }
   },
 
@@ -868,7 +1221,14 @@ const QuizApp = {
     } catch (e) {}
     this.state.isLoggedIn = false;
     this.state.userEmail = '';
-    this.render();
+    this.state.username = '';
+    this.state.redirectAfterLogin = null;
+    this.state.customQuizzes = [];
+    localStorage.removeItem('easyQuiz_custom');
+    localStorage.removeItem('quiz_custom');
+    localStorage.removeItem('quiz_errors');
+    localStorage.removeItem('quiz_history');
+    this.navigate('home');
   },
 
   async checkLoginStatus() {
@@ -877,10 +1237,12 @@ const QuizApp = {
       if (user) {
         this.state.isLoggedIn = true;
         this.state.userEmail = user.email;
+        this.state.username = user.username || '';
       }
     } catch (e) {
       this.state.isLoggedIn = false;
       this.state.userEmail = '';
+      this.state.username = '';
     }
   },
 
@@ -902,15 +1264,15 @@ const QuizApp = {
       
       question.options.forEach((opt, j) => {
         const letter = String.fromCharCode(65 + j);
-        const isCorrect = question.correctIndex && question.correctIndex.includes(opt.id);
+        const isCorrect = question.correctAnswerIds && question.correctAnswerIds.includes(opt.id);
         const mark = isCorrect ? '✓' : ' ';
         txt += letter + '. ' + opt.text + ' ' + mark + '\n';
       });
-      
+
       // 显示正确答案
-      if (question.correctIndex && question.correctIndex.length > 0) {
-        const answers = question.correctIndex.map(idx => String.fromCharCode(65 + idx)).join('');
-        const correctOptions = question.options.filter(o => question.correctIndex.includes(o.id)).map(o => o.text).join('、');
+      if (question.correctAnswerIds && question.correctAnswerIds.length > 0) {
+        const answers = question.correctAnswerIds.map(idx => String.fromCharCode(65 + idx)).join('');
+        const correctOptions = question.correctAnswerIds.map(id => question.options.find(o => o.id === id)?.text).filter(Boolean).join('、');
         txt += '答案：' + answers + ' (' + correctOptions + ')\n';
       }
       

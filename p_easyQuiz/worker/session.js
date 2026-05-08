@@ -13,7 +13,7 @@ export async function createSession(env, userId) {
 
 export async function getSession(env, sessionId) {
   const result = await env.DB.prepare(
-    'SELECT s.*, u.id as user_id, u.email FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = ? AND s.expires_at > datetime("now")'
+    'SELECT s.*, u.id as user_id, u.username, u.email FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.id = ? AND s.expires_at > datetime("now")'
   ).bind(sessionId).first();
   
   return result || null;
@@ -31,9 +31,9 @@ export function getSessionFromCookie(request) {
 
 export function setSessionCookie(sessionId, expiresAt) {
   const maxAge = Math.floor((new Date(expiresAt) - Date.now()) / 1000);
-  return `session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}`;
+  return `session=${sessionId}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=${maxAge}`;
 }
 
 export function clearSessionCookie() {
-  return 'session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0';
+  return 'session=; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=0';
 }

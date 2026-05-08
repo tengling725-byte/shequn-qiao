@@ -65,10 +65,11 @@ wrangler/state/
 *.sqlite-shm
 *.sqlite3
 
-# ===== 本地临时代码目录 =====
+# ===== 本地临时代码和文件 =====
 /temp_code/
 /test_temp/
 /temp_download/
+临时*
 
 # ========== 自定义 ==========
 /r_*/

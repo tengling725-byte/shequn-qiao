@@ -1,0 +1,73 @@
+{
+  "title": "Playwright测试题库",
+  "description": "用于自动化测试的题库",
+  "category": "测试",
+  "questions": [
+    {
+      "id": "q-1",
+      "type": "single",
+      "content": "下面哪个是 CSS 中选择器的正确语法？",
+      "options": [
+        { "id": 0, "text": "class.name", "isCorrect": false },
+        { "id": 1, "text": ".class-name", "isCorrect": true },
+        { "id": 2, "text": "#class-name", "isCorrect": false },
+        { "id": 3, "text": "class=name", "isCorrect": false }
+      ],
+      "explanation": "CSS 类选择器以点号开头，如 .class-name",
+      "difficulty": 1,
+      "tags": ["CSS"]
+    },
+    {
+      "id": "q-2",
+      "type": "single",
+      "content": "React 中 useEffect 的作用是什么？",
+      "options": [
+        { "id": 0, "text": "创建组件", "isCorrect": false },
+        { "id": 1, "text": "处理副作用", "isCorrect": true },
+        { "id": 2, "text": "渲染 HTML", "isCorrect": false },
+        { "id": 3, "text": "管理状态", "isCorrect": false }
+      ],
+      "explanation": "useEffect 用于处理副作用，如数据获取、订阅等",
+      "difficulty": 2,
+      "tags": ["React"]
+    },
+    {
+      "id": "q-3",
+      "type": "multiple",
+      "content": "下面哪些是 JavaScript 的原始数据类型？",
+      "options": [
+        { "id": 0, "text": "Array", "isCorrect": false },
+        { "id": 1, "text": "String", "isCorrect": true },
+        { "id": 2, "text": "Number", "isCorrect": true },
+        { "id": 3, "text": "Object", "isCorrect": false }
+      ],
+      "explanation": "JavaScript 原始类型包括 String、Number、Boolean、null、undefined、Symbol、BigInt",
+      "difficulty": 1,
+      "tags": ["JavaScript"]
+    },
+    {
+      "id": "q-4",
+      "type": "true_false",
+      "content": "HTML 中 <div> 是块级元素",
+      "options": [
+        { "id": 0, "text": "正确", "isCorrect": true },
+        { "id": 1, "text": "错误", "isCorrect": false }
+      ],
+      "explanation": "div 默认 display: block，是块级元素",
+      "difficulty": 1,
+      "tags": ["HTML"]
+    },
+    {
+      "id": "q-5",
+      "type": "true_false",
+      "content": "let 声明的变量有函数作用域",
+      "options": [
+        { "id": 0, "text": "正确", "isCorrect": false },
+        { "id": 1, "text": "错误", "isCorrect": true }
+      ],
+      "explanation": "let 和 const 有块级作用域，var 才有函数作用域",
+      "difficulty": 1,
+      "tags": ["JavaScript"]
+    }
+  ]
+}
